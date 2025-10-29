@@ -1,0 +1,23 @@
+/* Annotation Canvas Styles */
+
+.annotation-highlight {
+  background-color: yellow;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+}
+
+.annotation-loaded-language { background-color: #ffeb3b; }
+.annotation-framing { background-color: #ff9800; }
+.annotation-false-balance { background-color: #f44336; }
+.annotation-cherry-picking { background-color: #e91e63; }
+.annotation-sensationalism { background-color: #9c27b0; }
+.annotation-misleading-headlines { background-color: #673ab7; }
+.annotation-source-bias { background-color: #3f51b5; }
+.annotation-statistical-manipulation { background-color: #2196f3; }
+
+.annotation-highlight:hover {
+  opacity: 0.8;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
