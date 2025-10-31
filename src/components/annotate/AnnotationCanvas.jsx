@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import './annotate.css'
 
 const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveAnnotation }) => {
@@ -264,7 +265,12 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   }, [])
 
   return (
-    <div className="annotation-canvas-container">
+    <motion.div
+      className="annotation-canvas-container"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
+    >
       <div className="annotation-canvas-header">
         <h2>Annotation Canvas</h2>
         <div className="annotation-stats">
@@ -386,7 +392,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

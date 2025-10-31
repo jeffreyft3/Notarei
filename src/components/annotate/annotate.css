@@ -8,6 +8,10 @@
   position: relative;
 }
 
+.annotation-canvas-container {
+  padding: 0px 20px;
+}
+
 .annotation-loaded-language { background-color: #ffeb3b; }
 .annotation-framing { background-color: #ff9800; }
 .annotation-false-balance { background-color: #f44336; }
@@ -42,12 +46,16 @@
 /* Page layout styles */
 .pageWrapper {
     margin-top: 20px;
+    display: flex;
+    justify-self: center;
+
 }
 
 .canvas {
     margin-top: 50px;
-    display: flex;
     width: 100vw;
+    display: flex;
+    max-width: 1400px;
     justify-content: space-evenly;
 }
 
@@ -56,8 +64,145 @@
 }
 
 .rightPaneWrapper, .guidancePaneWrapper {
-    min-width: 220px;
-    padding: 0px 15px;
+  min-width: 220px;
+  padding: 0px 15px;
+}
+
+.guidancePaneWrapper {
+  flex: 0 1 clamp(220px, 27vw, 320px);
+  max-width: clamp(220px, 27vw, 340px);
+  width: 100%;
+}
+
+.guidance-toolbar {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  color: #111;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.guidance-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.guidance-instructions {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.guidance-instructions h3 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: #1f2937;
+}
+
+.guidance-instructions ol {
+  list-style: decimal inside;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 0;
+  color: #4b5563;
+}
+
+.guidance-actions {
+  flex: 0 1 220px;
+  width: min(220px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.guidance-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.guidance-stage-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+}
+
+.guidance-tip {
+  padding: 12px;
+  border-radius: 6px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #3730a3;
+}
+
+.stage-indicator-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.stage-indicator-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #312e81;
+}
+
+.tip-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.guidance-tip p {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+@media (max-width: 992px) {
+  .guidance-content {
+    flex-direction: column;
+  }
+
+  .guidance-actions {
+    width: 100%;
+    flex: 1 1 100%;
+  }
 }
 
 /* Annotations list in right pane */
@@ -94,7 +239,7 @@
 
 .annotation-window select, .annotation-window textarea {
     width: 100%;
-    padding: 8px;
+    padding: 15px 12px;
     margin: 5px 0;
     border: none;
     background: #ededed;
