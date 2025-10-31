@@ -1,4 +1,6 @@
+"use client"
 import React from 'react'
+import { motion } from 'framer-motion'
 
 const AnnotationList = ({ annotations, onRemoveAnnotation }) => {
   // Color mapping for each bias category
@@ -15,15 +17,25 @@ const AnnotationList = ({ annotations, onRemoveAnnotation }) => {
 
   if (!annotations || annotations.length === 0) {
     return (
-      <div className="annotations-list">
+      <motion.div
+        className="annotations-list"
+        initial={{ opacity: 0, x: 24 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
         <h3>Annotations</h3>
         <p style={{ color: '#666', fontStyle: 'italic' }}>No annotations yet. Select text in the document to add annotations.</p>
-      </div>
+      </motion.div>
     )
   }
 
   return (
-    <div className="annotations-list">
+    <motion.div
+      className="annotations-list"
+      initial={{ opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       <h3>Annotations ({annotations.length})</h3>
       <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
         {annotations.map((annotation) => (
@@ -77,7 +89,7 @@ const AnnotationList = ({ annotations, onRemoveAnnotation }) => {
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
