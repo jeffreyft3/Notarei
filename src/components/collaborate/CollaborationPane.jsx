@@ -3,11 +3,13 @@ import './collaborate.css'
 const CollaborationPane = () => {
   return (
     <div className='componentWrapper'>
-        <h1>Collaboration Pane</h1>
+        <h2>
+            Collaborate
+        </h2>
         <div>
-                <h1>
+                <h3>
                 Active Collaborators
-                </h1>
+                </h3>
             <div>
                 User List
             </div>
