@@ -1,12 +1,13 @@
+"use client"
 import React, { useState, useRef, useEffect } from 'react'
+import './annotate.css'
 
-const AnnotationCanvas = ({ articleText }) => {
-  const [selectedText, setSelectedText] = useState('')
-  const [selectionRange, setSelectionRange] = useState(null)
-  const [annotations, setAnnotations] = useState([])
+const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveAnnotation }) => {
+  const [pendingSelection, setPendingSelection] = useState(null) // Current selection being annotated
   const [showAnnotationWindow, setShowAnnotationWindow] = useState(false)
   const [currentAnnotation, setCurrentAnnotation] = useState(null)
   const canvasRef = useRef(null)
+  const textContentRef = useRef(null)
 
   const biasCategories = [
     'Loaded Language',
@@ -19,54 +20,115 @@ const AnnotationCanvas = ({ articleText }) => {
     'Statistical Manipulation'
   ]
 
+  // Color mapping for each bias category
+  const categoryColors = {
+    'Loaded Language': '#ffeb3b',
+    'Framing': '#ff9800',
+    'False Balance': '#f44336',
+    'Cherry Picking': '#e91e63',
+    'Sensationalism': '#9c27b0',
+    'Misleading Headlines': '#673ab7',
+    'Source Bias': '#3f51b5',
+    'Statistical Manipulation': '#2196f3'
+  }
+
+  // Get absolute character position in the text content
+  const getAbsoluteOffset = (container, node, offset) => {
+    if (!container || !node) return -1
+    
+    let absoluteOffset = 0
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    )
+
+    let currentNode
+    while (currentNode = walker.nextNode()) {
+      if (currentNode === node) {
+        return absoluteOffset + offset
+      }
+      absoluteOffset += currentNode.textContent.length
+    }
+    
+    // If we didn't find the node, it's not within our container
+    return -1
+  }
+
   // Handle text selection
-  const handleTextSelection = () => {
+  const handleTextSelection = (e) => {
+    // Don't interfere if clicking on annotation window
+    if (e.target.closest('.annotation-window')) {
+      return
+    }
+
     const selection = window.getSelection()
     const selectedText = selection.toString().trim()
     
     if (selectedText && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0)
       
-      // Check if selection is within our canvas
-      if (canvasRef.current && canvasRef.current.contains(range.commonAncestorContainer)) {
-        setSelectedText(selectedText)
-        setSelectionRange({
-          start: range.startOffset,
-          end: range.endOffset,
-          text: selectedText,
-          range: range.cloneRange()
-        })
-        setShowAnnotationWindow(true)
-        setCurrentAnnotation({
-          text: selectedText,
-          category: '',
-          note: ''
-        })
+      // Check if BOTH start and end of selection are within our text content
+      const isStartInCanvas = textContentRef.current && textContentRef.current.contains(range.startContainer)
+      const isEndInCanvas = textContentRef.current && textContentRef.current.contains(range.endContainer)
+      
+      if (isStartInCanvas && isEndInCanvas) {
+        const startOffset = getAbsoluteOffset(textContentRef.current, range.startContainer, range.startOffset)
+        const endOffset = getAbsoluteOffset(textContentRef.current, range.endContainer, range.endOffset)
+        
+        // Validate that we got valid offsets
+        if (startOffset !== -1 && endOffset !== -1 && startOffset < endOffset) {
+          const selectionData = {
+            text: selectedText,
+            startOffset,
+            endOffset,
+            id: `temp-${Date.now()}`
+          }
+          
+          setPendingSelection(selectionData)
+          setShowAnnotationWindow(true)
+          setCurrentAnnotation({
+            text: selectedText,
+            category: '',
+            note: ''
+          })
+          
+          // Clear the browser's default selection styling since we'll handle it
+          setTimeout(() => {
+            window.getSelection().removeAllRanges()
+          }, 0)
+        }
+      } else {
+        // If selection spans outside our canvas, clear any pending selections
+        setPendingSelection(null)
+        setShowAnnotationWindow(false)
+        setCurrentAnnotation(null)
       }
     } else {
-      // Clear selection if nothing is selected
-      setSelectedText('')
-      setSelectionRange(null)
+      // No text selected, clear pending state
+      setPendingSelection(null)
       setShowAnnotationWindow(false)
+      setCurrentAnnotation(null)
     }
   }
 
   // Add annotation
   const addAnnotation = (category, note = '') => {
-    if (selectionRange && selectedText) {
+    if (pendingSelection && currentAnnotation) {
       const newAnnotation = {
         id: Date.now(),
-        text: selectedText,
+        text: pendingSelection.text,
         category,
         note,
-        range: selectionRange,
+        startOffset: pendingSelection.startOffset,
+        endOffset: pendingSelection.endOffset,
         timestamp: new Date().toISOString()
       }
       
-      setAnnotations(prev => [...prev, newAnnotation])
+      onAddAnnotation(newAnnotation)
       setShowAnnotationWindow(false)
-      setSelectedText('')
-      setSelectionRange(null)
+      setPendingSelection(null)
       setCurrentAnnotation(null)
       
       // Clear browser selection
@@ -74,9 +136,9 @@ const AnnotationCanvas = ({ articleText }) => {
     }
   }
 
-  // Remove annotation
+  // Remove annotation (delegate to parent)
   const removeAnnotation = (id) => {
-    setAnnotations(prev => prev.filter(ann => ann.id !== id))
+    onRemoveAnnotation(id)
   }
 
   // Handle annotation category selection
@@ -103,29 +165,95 @@ const AnnotationCanvas = ({ articleText }) => {
   // Cancel annotation
   const cancelAnnotation = () => {
     setShowAnnotationWindow(false)
-    setSelectedText('')
-    setSelectionRange(null)
+    setPendingSelection(null)
     setCurrentAnnotation(null)
     window.getSelection().removeAllRanges()
   }
 
-  // Render annotated text with highlights
-  const renderAnnotatedText = () => {
-    if (annotations.length === 0) {
-      return <span>{articleText}</span>
+  // Create highlight spans for text rendering
+  const createHighlightedText = () => {
+    // Combine all annotations with pending selection for rendering
+    const allHighlights = [...annotations]
+    if (pendingSelection) {
+      allHighlights.push({
+        ...pendingSelection,
+        category: 'pending',
+        isPending: true
+      })
     }
 
-    // This is a simplified version - in a real implementation you'd want more sophisticated text parsing
-    let renderedText = articleText
-    annotations.forEach((annotation, index) => {
-      const highlightClass = `annotation-highlight annotation-${annotation.category.toLowerCase().replace(/\s+/g, '-')}`
-      renderedText = renderedText.replace(
-        annotation.text,
-        `<span class="${highlightClass}" data-annotation-id="${annotation.id}" title="${annotation.category}: ${annotation.note}">${annotation.text}</span>`
-      )
+    // Sort by start position to handle overlapping correctly
+    allHighlights.sort((a, b) => a.startOffset - b.startOffset)
+
+    if (allHighlights.length === 0) {
+      return [{ type: 'text', content: articleText }]
+    }
+
+    const parts = []
+    let currentPos = 0
+
+    allHighlights.forEach((highlight) => {
+      // Add text before highlight
+      if (highlight.startOffset > currentPos) {
+        parts.push({
+          type: 'text',
+          content: articleText.slice(currentPos, highlight.startOffset)
+        })
+      }
+
+      // Add highlighted text
+      parts.push({
+        type: 'highlight',
+        content: articleText.slice(highlight.startOffset, highlight.endOffset),
+        annotation: highlight
+      })
+
+      currentPos = Math.max(currentPos, highlight.endOffset)
     })
 
-    return <span dangerouslySetInnerHTML={{ __html: renderedText }} />
+    // Add remaining text
+    if (currentPos < articleText.length) {
+      parts.push({
+        type: 'text',
+        content: articleText.slice(currentPos)
+      })
+    }
+
+    return parts
+  }
+
+  // Render the text with highlights
+  const renderHighlightedText = () => {
+    const parts = createHighlightedText()
+    
+    return parts.map((part, index) => {
+      if (part.type === 'text') {
+        return <span key={index}>{part.content}</span>
+      } else {
+        const { annotation } = part
+        const backgroundColor = annotation.isPending 
+          ? 'rgba(0, 122, 204, 0.3)' 
+          : categoryColors[annotation.category] || '#ffeb3b'
+        
+        return (
+          <span
+            key={index}
+            style={{
+              backgroundColor,
+              padding: '2px 4px',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              position: 'relative',
+              border: annotation.isPending ? '2px dashed #007acc' : 'none'
+            }}
+            title={annotation.isPending ? 'Pending annotation' : `${annotation.category}: ${annotation.note}`}
+            data-annotation-id={annotation.id}
+          >
+            {part.content}
+          </span>
+        )
+      }
+    })
   }
 
   useEffect(() => {
@@ -141,26 +269,37 @@ const AnnotationCanvas = ({ articleText }) => {
         <h2>Annotation Canvas</h2>
         <div className="annotation-stats">
           {annotations.length} annotation(s)
+          {pendingSelection && <span style={{ color: '#007acc', marginLeft: '10px' }}>• Pending selection</span>}
         </div>
       </div>
 
       <div 
         ref={canvasRef}
-        className="annotation-text-content"
+        className={`annotation-text-content ${pendingSelection ? 'has-pending-selection' : ''}`}
         style={{
           padding: '20px',
           border: '1px solid #ddd',
           borderRadius: '8px',
           lineHeight: '1.6',
           userSelect: 'text',
-          cursor: 'text'
+          cursor: 'text',
+          position: 'relative'
+        }}
+        onMouseDown={(e) => {
+          // Clear any existing pending selections when starting a new selection
+          if (!e.target.closest('.annotation-window')) {
+            setPendingSelection(null)
+            setShowAnnotationWindow(false)
+          }
         }}
       >
-        {renderAnnotatedText()}
+        <div ref={textContentRef}>
+          {renderHighlightedText()}
+        </div>
       </div>
 
       {/* Annotation Window - Fixed on right side */}
-      {showAnnotationWindow && (
+      {showAnnotationWindow && pendingSelection && (
         <div 
           className="annotation-window"
           style={{
@@ -181,7 +320,10 @@ const AnnotationCanvas = ({ articleText }) => {
           
           <div className="selected-text" style={{ margin: '10px 0', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
             <strong>Selected text:</strong>
-            <p>"{selectedText}"</p>
+            <p>"{pendingSelection.text}"</p>
+            <small style={{ color: '#666' }}>
+              Characters {pendingSelection.startOffset}-{pendingSelection.endOffset}
+            </small>
           </div>
 
           <div className="bias-category-selection">
@@ -189,7 +331,7 @@ const AnnotationCanvas = ({ articleText }) => {
             <select 
               value={currentAnnotation?.category || ''}
               onChange={(e) => handleCategorySelect(e.target.value)}
-              style={{ width: '100%', padding: '8px', margin: '5px 0' }}
+              style={{ }}
             >
               <option value="">Select a category</option>
               {biasCategories.map((category, index) => (
@@ -207,11 +349,6 @@ const AnnotationCanvas = ({ articleText }) => {
               onChange={(e) => handleNoteChange(e.target.value)}
               placeholder="Add a note about this annotation..."
               style={{ 
-                width: '100%', 
-                height: '60px', 
-                padding: '8px', 
-                margin: '5px 0',
-                resize: 'vertical'
               }}
             />
           </div>
@@ -247,46 +384,6 @@ const AnnotationCanvas = ({ articleText }) => {
               Cancel
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Annotations List */}
-      {annotations.length > 0 && (
-        <div className="annotations-list" style={{ marginTop: '20px' }}>
-          <h3>Annotations</h3>
-          {annotations.map((annotation) => (
-            <div 
-              key={annotation.id} 
-              className="annotation-item"
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                padding: '10px',
-                margin: '10px 0',
-                backgroundColor: '#f9f9f9'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <strong>{annotation.category}</strong>
-                  <p style={{ margin: '5px 0', fontStyle: 'italic' }}>"{annotation.text}"</p>
-                  {annotation.note && <p style={{ fontSize: '0.9em', color: '#666' }}>{annotation.note}</p>}
-                </div>
-                <button 
-                  onClick={() => removeAnnotation(annotation.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#999',
-                    cursor: 'pointer',
-                    fontSize: '16px'
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>
