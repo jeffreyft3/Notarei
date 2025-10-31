@@ -1,0 +1,235 @@
+.collaboration-pane {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	padding: 20px;
+	box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+	color: #0f172a;
+}
+
+.collaboration-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 10px;
+}
+
+.collaboration-header h2 {
+	font-size: 1.2rem;
+	margin: 0;
+}
+
+.collaboration-count {
+	font-size: 0.85rem;
+	color: #64748b;
+	background: #f1f5f9;
+	border-radius: 999px;
+	padding: 4px 12px;
+}
+
+.original-note {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #f8fafc;
+	padding: 16px;
+}
+
+.note-meta {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.note-meta-author {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	color: #475569;
+	letter-spacing: 0.08em;
+}
+
+.note-placeholder {
+	color: #94a3b8;
+	font-style: italic;
+}
+
+.conversation {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.conversation-header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.conversation-header h3 {
+	margin: 0;
+	font-size: 1rem;
+}
+
+.conversation-hint {
+	font-size: 0.85rem;
+	color: #64748b;
+}
+
+.conversation-feed {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-height: 45vh;
+	overflow-y: auto;
+	padding-right: 6px;
+}
+
+.conversation-feed::-webkit-scrollbar {
+	width: 6px;
+}
+
+.conversation-feed::-webkit-scrollbar-thumb {
+	background: rgba(148, 163, 184, 0.5);
+	border-radius: 999px;
+}
+
+.comment-bubble {
+	border-radius: 10px;
+	padding: 12px 14px;
+	border: 1px solid #e2e8f0;
+	background: #ffffff;
+	color: #0f172a;
+	box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+	max-width: 100%;
+}
+
+.comment-bubble-reviewer {
+	border-left: 4px solid #2563eb;
+}
+
+.comment-bubble-annotator {
+	border-left: 4px solid #16a34a;
+}
+
+.comment-bubble-you {
+	border-left: 4px solid #7c3aed;
+}
+
+.comment-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	font-size: 0.85rem;
+	color: #475569;
+	margin-bottom: 6px;
+}
+
+.comment-author {
+	font-weight: 600;
+}
+
+.comment-body {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.45;
+	color: #1e293b;
+}
+
+.comment-composer {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	border-top: 1px solid #e2e8f0;
+	padding-top: 18px;
+}
+
+.composer-label {
+	font-size: 0.85rem;
+	color: #475569;
+	font-weight: 600;
+}
+
+.comment-composer textarea {
+	resize: vertical;
+	min-height: 90px;
+	border-radius: 10px;
+	border: 1px solid #cbd5f5;
+	padding: 12px 14px;
+	font-size: 0.95rem;
+	line-height: 1.5;
+	font-family: inherit;
+	background: #f8fafc;
+	color: #0f172a;
+}
+
+.comment-composer textarea:focus {
+	outline: none;
+	border-color: #2563eb;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.composer-actions {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+	flex-wrap: wrap;
+}
+
+.composer-actions button {
+	cursor: pointer;
+	border: none;
+	border-radius: 999px;
+	padding: 10px 18px;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.composer-escalate {
+	background: linear-gradient(135deg, rgba(248, 113, 113, 0.1), rgba(244, 63, 94, 0.18));
+	color: #dc2626;
+	border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+.composer-escalate:hover {
+	box-shadow: 0 10px 20px rgba(248, 113, 113, 0.18);
+}
+
+.composer-submit {
+	background: linear-gradient(135deg, #2563eb, #1d4ed8);
+	color: #ffffff;
+	box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+}
+
+.composer-submit:disabled {
+	background: #94a3b8;
+	box-shadow: none;
+	cursor: not-allowed;
+}
+
+.composer-submit:not(:disabled):hover {
+	box-shadow: 0 12px 26px rgba(37, 99, 235, 0.35);
+}
+
+@media (max-width: 768px) {
+	.collaboration-pane {
+		padding: 16px;
+	}
+
+	.conversation-feed {
+		max-height: 40vh;
+	}
+
+	.composer-actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.composer-actions button {
+		width: 100%;
+		justify-content: center;
+	}
+}
