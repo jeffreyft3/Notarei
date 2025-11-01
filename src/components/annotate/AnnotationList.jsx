@@ -2,7 +2,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 
-const AnnotationList = ({ annotations, onRemoveAnnotation }) => {
+const AnnotationList = ({ annotations, onRemoveAnnotation, onSubmit }) => {
   // Color mapping for each bias category
   const categoryColors = {
     'Loaded Language': '#ffeb3b',
@@ -13,6 +13,17 @@ const AnnotationList = ({ annotations, onRemoveAnnotation }) => {
     'Misleading Headlines': '#673ab7',
     'Source Bias': '#3f51b5',
     'Statistical Manipulation': '#2196f3'
+  }
+
+  const handleSubmit = () => {
+    if (annotations && annotations.length > 0) {
+      const success = onSubmit()
+      if (success) {
+        alert(`Successfully submitted ${annotations.length} annotation${annotations.length > 1 ? 's' : ''}! Switching to review mode.`)
+      }
+    } else {
+      alert('No annotations to submit!')
+    }
   }
 
   if (!annotations || annotations.length === 0) {
@@ -88,6 +99,11 @@ const AnnotationList = ({ annotations, onRemoveAnnotation }) => {
             </div>
           </div>
         ))}
+      </div>
+      <div className="annotation-actions" style={{ marginTop: '10px', textAlign: 'center' }}>
+        <button className='submit-button' onClick={handleSubmit}>
+            Submit
+        </button>
       </div>
     </motion.div>
   )

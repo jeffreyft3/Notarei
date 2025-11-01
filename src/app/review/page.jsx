@@ -4,7 +4,7 @@ const ReviewPage = () => {
   return (
     <div style={{ 
       padding: '2rem',
-      maxWidth: '1400px',
+      maxWidth: '1200px',
       margin: '0 auto',
       minHeight: '80vh',
       display: 'flex',

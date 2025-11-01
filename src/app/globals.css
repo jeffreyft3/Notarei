@@ -1,15 +1,24 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #E27D60;
-
+  --primary: #e27d60;
+  --primary-dark: #c9654d;
+  --primary-soft: #fff2ed;
+  --font-tt-commons-pro: "tt-commons-pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-textbook-new: "textbook-new", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-body: "neue-haas-grotesk-text", "tt-commons-pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-heading: "neue-haas-grotesk-display", "textbook-new", "tt-commons-pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui: "tt-commons-pro", "neue-haas-grotesk-text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-buttons: "tt-commons-pro", "neue-haas-grotesk-text", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
-    --primary: #E27D60;
+    --primary: #e27d60;
+    --primary-dark: #f39a82;
+    --primary-soft: rgba(226, 125, 96, 0.08);
   }
 }
 
@@ -22,9 +31,20 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 * {

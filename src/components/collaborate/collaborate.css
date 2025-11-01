@@ -179,6 +179,7 @@
 }
 
 .composer-actions button {
+    font-family: var(--font-buttons);
 	cursor: pointer;
 	border: none;
 	border-radius: 999px;
