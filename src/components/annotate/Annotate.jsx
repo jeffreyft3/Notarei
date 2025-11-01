@@ -10,6 +10,7 @@ const sampleArticleText = "The word Fascism has now no meaning except in so far 
 const Annotate = () => {
     const [stage, setStage] = useState("annotating") // 'annotating', 'reviewing'
     const [annotations, setAnnotations] = useState([])
+    const [submittedAnnotations, setSubmittedAnnotations] = useState([])
 
     // Handle adding new annotations
     const handleAddAnnotation = (newAnnotation) => {
@@ -19,6 +20,28 @@ const Annotate = () => {
     // Handle removing annotations
     const handleRemoveAnnotation = (id) => {
         setAnnotations(prev => prev.filter(ann => ann.id !== id))
+    }
+
+    // Handle submission of annotations
+    const handleSubmitAnnotations = () => {
+        if (annotations && annotations.length > 0) {
+            // Save annotations to submitted state
+            setSubmittedAnnotations([...annotations])
+            
+            // Save to localStorage for Review page as well
+            const submissionData = {
+                annotations: annotations,
+                submittedAt: new Date().toISOString(),
+                totalCount: annotations.length
+            }
+            localStorage.setItem('submittedAnnotations', JSON.stringify(submissionData))
+            
+            // Switch to reviewing stage
+            setStage('reviewing')
+            
+            return true
+        }
+        return false
     }
 
     // useEffect(() => {
@@ -40,8 +63,8 @@ const Annotate = () => {
         <div className="guidancePaneWrapper">
             <GuidanceToolbar 
                 stage={stage}
-                annotationCount={annotations.length}
                 setStage={setStage}
+                annotations={stage === 'reviewing' ? submittedAnnotations : annotations}
             />
         </div>
         <div className="canvasMainWrapper">
@@ -58,6 +81,7 @@ const Annotate = () => {
                     <AnnotationList 
                         annotations={annotations}
                         onRemoveAnnotation={handleRemoveAnnotation}
+                        onSubmit={handleSubmitAnnotations}
                     />
                 )
             }

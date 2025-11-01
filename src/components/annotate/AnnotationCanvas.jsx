@@ -7,6 +7,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   const [pendingSelection, setPendingSelection] = useState(null) // Current selection being annotated
   const [showAnnotationWindow, setShowAnnotationWindow] = useState(false)
   const [currentAnnotation, setCurrentAnnotation] = useState(null)
+  const [selectOpen, setSelectOpen] = useState(false)
   const canvasRef = useRef(null)
   const textContentRef = useRef(null)
 
@@ -275,7 +276,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
         <h2>Annotation Canvas</h2>
         <div className="annotation-stats">
           {annotations.length} annotation(s)
-          {pendingSelection && <span style={{ color: '#007acc', marginLeft: '10px' }}>• Pending selection</span>}
+          {pendingSelection && <span style={{ color: '#007acc', marginLeft: '10px', fontWeight: 700 }}>• Pending selection</span>}
         </div>
       </div>
 
@@ -286,7 +287,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
           padding: '20px',
           border: '1px solid #ddd',
           borderRadius: '8px',
-          lineHeight: '1.6',
+          lineHeight: '2',
           userSelect: 'text',
           cursor: 'text',
           position: 'relative'
@@ -334,18 +335,21 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
 
           <div className="bias-category-selection">
             <label>Bias Category:</label>
-            <select 
-              value={currentAnnotation?.category || ''}
-              onChange={(e) => handleCategorySelect(e.target.value)}
-              style={{ }}
-            >
-              <option value="">Select a category</option>
-              {biasCategories.map((category, index) => (
-                <option key={index} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+            <div className={`custom-select-wrapper${selectOpen ? ' open' : ''}`}>
+              <select
+                value={currentAnnotation?.category || ''}
+                onChange={(e) => handleCategorySelect(e.target.value)}
+                onFocus={() => setSelectOpen(true)}
+                onBlur={() => setSelectOpen(false)}
+              >
+                <option value="">Select a category</option>
+                {biasCategories.map((category, index) => (
+                  <option key={index} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="annotation-note">
@@ -373,7 +377,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
                 cursor: currentAnnotation?.category ? 'pointer' : 'not-allowed'
               }}
             >
-              Save Annotation
+              Save
             </button>
             <button 
               onClick={cancelAnnotation}

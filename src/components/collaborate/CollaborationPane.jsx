@@ -56,7 +56,7 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
       >
-        <h2>Collaboration Thread</h2>
+        <h2>Thread</h2>
         <span className="collaboration-count">{comments.length} replies</span>
       </motion.header>
 
@@ -131,7 +131,7 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
-            Escalate to Moderator
+            Escalate
           </motion.button>
           <motion.button
             type="submit"
@@ -140,7 +140,7 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
             whileHover={{ scale: draft.trim() ? 1.03 : 1 }}
             whileTap={{ scale: draft.trim() ? 0.97 : 1 }}
           >
-            Send Reply
+            Reply
           </motion.button>
         </div>
       </motion.form>

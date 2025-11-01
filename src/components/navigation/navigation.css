@@ -8,7 +8,7 @@
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-ui);
 }
 
 .nav-container {
@@ -25,14 +25,14 @@
 .nav-logo {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--primary);
   text-decoration: none;
   letter-spacing: -0.02em;
   transition: all 0.3s ease;
 }
 
 .nav-logo:hover {
-  color: #1d4ed8;
+  color: var(--primary-dark);
 }
 
 /* Desktop Navigation */
@@ -47,7 +47,7 @@
 .nav-link {
   position: relative;
   text-decoration: none;
-  color: #374151;
+  color: #2f231f;
   font-weight: 500;
   font-size: 1rem;
   transition: all 0.3s ease;
@@ -59,17 +59,18 @@
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
   transition: all 0.3s ease;
+  font-weight: 600;
+
 }
 
 .nav-link:hover .nav-link-content {
-  background-color: rgba(37, 99, 235, 0.05);
-  color: #2563eb;
+  background-color: rgba(226, 125, 96, 0.08);
+  color: var(--primary);
 }
 
 .nav-link.active .nav-link-content {
-  background-color: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-  font-weight: 600;
+  background-color: rgba(226, 125, 96, 0.12);
+  color: var(--primary);
 }
 
 /* Active indicator */
@@ -78,7 +79,7 @@
   bottom: -2px;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
   border-radius: 2px;
   pointer-events: none;
   will-change: transform, width;
@@ -105,14 +106,14 @@
 .mobile-menu-button span {
   width: 24px;
   height: 2px;
-  background: #374151;
+  background: #2f231f;
   border-radius: 1px;
   transition: all 0.3s ease;
   transform-origin: center;
 }
 
 .mobile-menu-button:hover span {
-  background: #2563eb;
+  background: var(--primary);
 }
 
 /* Mobile menu button animation when open */
@@ -153,8 +154,8 @@
 }
 
 .nav-links.mobile .nav-link.active .nav-link-content {
-  background-color: rgba(37, 99, 235, 0.1);
-  border-left: 4px solid #2563eb;
+  background-color: rgba(226, 125, 96, 0.12);
+  border-left: 4px solid var(--primary);
 }
 
 /* Dark mode support */
@@ -165,11 +166,11 @@
   }
 
   .nav-logo {
-    color: #60a5fa;
+    color: var(--primary);
   }
 
   .nav-logo:hover {
-    color: #93c5fd;
+    color: var(--primary-dark);
   }
 
   .nav-link {
@@ -177,13 +178,13 @@
   }
 
   .nav-link:hover .nav-link-content {
-    background-color: rgba(96, 165, 250, 0.1);
-    color: #60a5fa;
+    background-color: rgba(226, 125, 96, 0.15);
+    color: var(--primary);
   }
 
   .nav-link.active .nav-link-content {
-    background-color: rgba(96, 165, 250, 0.15);
-    color: #60a5fa;
+    background-color: rgba(226, 125, 96, 0.22);
+    color: var(--primary);
   }
 
   .mobile-menu-button span {
@@ -191,11 +192,11 @@
   }
 
   .mobile-menu-button:hover span {
-    background: #60a5fa;
+    background: var(--primary);
   }
 
   .mobile-menu-button.open span {
-    background: #60a5fa;
+    background: var(--primary);
   }
 
   .nav-links.mobile {
@@ -208,8 +209,8 @@
   }
 
   .nav-links.mobile .nav-link.active .nav-link-content {
-    background-color: rgba(96, 165, 250, 0.15);
-    border-left-color: #60a5fa;
+    background-color: rgba(226, 125, 96, 0.22);
+    border-left-color: var(--primary);
   }
 }
 

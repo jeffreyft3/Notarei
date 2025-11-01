@@ -19,7 +19,7 @@ const Navigation = () => {
   ]
 
   const isActive = (href) => {
-    return pathname === href || (href === '/annotate' && pathname === '/')
+    return pathname === href
   }
 
   const toggleMobileMenu = () => {
