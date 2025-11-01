@@ -16,7 +16,7 @@ const UserPage = () => {
       <h1 style={{ 
         fontSize: '3rem',
         marginBottom: '1rem',
-        color: '#2563eb',
+        color: 'rgb(226, 125, 96)',
         fontWeight: '700'
       }}>
         User Profile
