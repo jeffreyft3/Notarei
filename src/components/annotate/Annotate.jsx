@@ -44,7 +44,7 @@ const Annotate = () => {
                 setStage={setStage}
             />
         </div>
-        <div>
+        <div className="canvasMainWrapper">
             <AnnotationCanvas 
                 articleText={sampleArticleText} 
                 annotations={annotations}
