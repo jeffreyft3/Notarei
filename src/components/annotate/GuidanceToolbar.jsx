@@ -20,17 +20,8 @@ const GuidanceToolbar = ({ stage, annotationCount, setStage }) => {
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
       <div className="guidance-content">
-        <section className="guidance-instructions">
-          <h3>Annotation Workflow</h3>
-          <ol>
-            {instructions.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ol>
-        </section>
-
-        <aside className="guidance-actions">
-          <div className="guidance-summary">
+        <aside className = "guidance-actions">
+        <div className="guidance-summary">
             <span className="summary-label">Annotations</span>
             <span className="summary-value">{annotationCount}</span>
           </div>
@@ -56,6 +47,17 @@ const GuidanceToolbar = ({ stage, annotationCount, setStage }) => {
               Reviewing
             </button>
           </div>
+          </aside>
+        <section className="guidance-instructions">
+          <h3>Annotation Workflow</h3>
+          <ol>
+            {instructions.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ol>
+        </section>
+
+        <aside className="guidance-actions">
           <div className="guidance-tip">
             <span className="tip-label">Tip</span>
             <p>Select text from the article pane to open the annotation window.</p>
