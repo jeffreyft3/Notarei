@@ -20,9 +20,8 @@ const InteractiveButton = ({
 
   const variants = {
     primary: {
-      background: '#2563eb',
+      background: '#0e224dff',
       color: 'white',
-      boxShadow: '0 4px 6px rgba(37, 99, 235, 0.2)',
       border: 'none'
     },
     secondary: {
@@ -55,7 +54,7 @@ const InteractiveButton = ({
         }}
         whileHover={hoverVariants[variant]}
         whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17, duration: 0.2 }}
         className={className}
       >
         {children}

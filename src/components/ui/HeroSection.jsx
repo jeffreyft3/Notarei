@@ -33,7 +33,7 @@ const AnimatedTitle = ({ children }) => {
       style={{ 
         fontSize: '4rem',
         marginBottom: '1rem',
-        color: '#2563eb',
+        color: '#E27D60',
         fontWeight: '700',
         letterSpacing: '-0.02em'
       }}
