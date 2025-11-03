@@ -10,6 +10,7 @@ const sampleArticleText = "Two federal judges ruled nearly simultaneously on Fri
 const Annotate = () => {
     const [stage, setStage] = useState("annotating") // 'annotating', 'reviewing'
     const [annotations, setAnnotations] = useState([])
+    const [hoveredAnnotationId, setHoveredAnnotationId] = useState(null)
 
     // Handle adding new annotations
     const handleAddAnnotation = (newAnnotation) => {
@@ -19,6 +20,13 @@ const Annotate = () => {
     // Handle removing annotations
     const handleRemoveAnnotation = (id) => {
         setAnnotations(prev => prev.filter(ann => ann.id !== id))
+    }
+
+    // Handle updating annotations
+    const handleUpdateAnnotation = (id, updatedAnnotation) => {
+        setAnnotations(prev => prev.map(ann => 
+            ann.id === id ? { ...ann, ...updatedAnnotation } : ann
+        ))
     }
 
     // useEffect(() => {
@@ -50,6 +58,7 @@ const Annotate = () => {
                 annotations={annotations}
                 onAddAnnotation={handleAddAnnotation}
                 onRemoveAnnotation={handleRemoveAnnotation}
+                hoveredAnnotationId={hoveredAnnotationId}
             />
         </div>
         <div className="rightPaneWrapper">
@@ -58,6 +67,8 @@ const Annotate = () => {
                     <AnnotationList 
                         annotations={annotations}
                         onRemoveAnnotation={handleRemoveAnnotation}
+                        onUpdateAnnotation={handleUpdateAnnotation}
+                        onHoverAnnotation={setHoveredAnnotationId}
                     />
                 )
             }
