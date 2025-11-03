@@ -77,7 +77,10 @@ const CollaborationPane = ({ selectedAnnotation }) => {
         transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
       >
         <div>
+            <span>
           <h2 style={{ margin: 0 }}>Thread</h2>
+
+            </span>
           {selectedAnnotation && (
             <div style={{ fontSize: '0.85rem', color: '#555' }}>
               <strong>{selectedAnnotation.category}</strong> • {selectedAnnotation.startOffset}-{selectedAnnotation.endOffset}

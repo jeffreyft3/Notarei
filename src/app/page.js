@@ -24,17 +24,17 @@ export default function Home() {
   return (
     <HeroSection>
       <AnimatedTitle>Notarei</AnimatedTitle>
-      
+
       <AnimatedDescription>
-        AI-powered bias detection and annotation tool. Identify, analyze, and understand 
+        FT3 Media's collaborative annotation tool. Identify, analyze, and understand
         bias patterns in documents with collaborative features and comprehensive reporting.
       </AnimatedDescription>
-      
+
       <ButtonContainer>
         <InteractiveButton href="/annotate" variant="primary">
           Start Annotating
         </InteractiveButton>
-        
+
         <InteractiveButton href="/review" variant="secondary">
           Learn More
         </InteractiveButton>

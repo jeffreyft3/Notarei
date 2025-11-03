@@ -125,7 +125,7 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
               }
             }}
             style={{
-              borderLeft: `4px solid ${categoryColors[annotation.category] || '#ccc'}`
+              border: `3px solid ${categoryColors[annotation.category] || '#ccc'}`
             }}
           >
             <div className="annotation-item-wrapper">
