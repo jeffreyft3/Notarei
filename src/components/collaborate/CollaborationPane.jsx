@@ -1,32 +1,49 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import "./collaborate.css"
 
-const CollaborationPane = ({ originalNote = "The tone shifts sharply when discussing alternative data sources. That might confuse readers and could benefit from clarification." }) => {
-  const [comments, setComments] = useState(() => [
-    {
-      id: "c1",
-      author: "Alex M.",
-      role: "reviewer",
-      text: "Thanks for flagging this passage. Can you clarify what specific bias you saw here?",
-      timestamp: "5m ago",
-    },
-    {
-      id: "c2",
-      author: "Morgan S.",
-      role: "annotator",
-      text: "I noticed the source list excludes opposing viewpoints, which could signal selection bias.",
-      timestamp: "2m ago",
-    },
-  ])
+// Threaded collaboration panel; opens the thread for the currently selected annotation (if any).
+// selectedAnnotation: { id, text, category, note, startOffset, endOffset }
+const CollaborationPane = ({ selectedAnnotation }) => {
+  // Keep in-memory threads keyed by annotation id. For dev simplicity, we don't persist threads.
+  const [threadsByAnnId, setThreadsByAnnId] = useState({})
+  const [activeAnnId, setActiveAnnId] = useState(null)
   const [draft, setDraft] = useState("")
+
+  // Derive the currently active thread comments
+  const comments = useMemo(() => {
+    if (!activeAnnId) return []
+    return threadsByAnnId[activeAnnId] || []
+  }, [activeAnnId, threadsByAnnId])
+
+  // When selection changes, open existing thread or initialize a new one
+  useEffect(() => {
+    const annId = selectedAnnotation?.id || null
+    setActiveAnnId(annId)
+    if (!annId) return
+    setThreadsByAnnId(prev => {
+      if (prev[annId]) return prev
+      // Seed a starter message referencing the original note if available
+      const seed = selectedAnnotation?.note
+        ? [{
+            id: `seed-${annId}`,
+            author: "Annotator",
+            role: "annotator",
+            text: selectedAnnotation.note,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          }]
+        : []
+      return { ...prev, [annId]: seed }
+    })
+  }, [selectedAnnotation])
 
   const handleSubmit = (event) => {
     event.preventDefault()
     const trimmed = draft.trim()
     if (!trimmed) return
 
+    if (!activeAnnId) return
     const newComment = {
       id: `c-${Date.now()}`,
       author: "You",
@@ -35,7 +52,10 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }
 
-    setComments((prev) => [...prev, newComment])
+    setThreadsByAnnId(prev => ({
+      ...prev,
+      [activeAnnId]: [...(prev[activeAnnId] || []), newComment]
+    }))
     setDraft("")
   }
 
@@ -56,8 +76,15 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
       >
-        <h2>Thread</h2>
-        <span className="collaboration-count">{comments.length} replies</span>
+        <div>
+          <h2 style={{ margin: 0 }}>Thread</h2>
+          {selectedAnnotation && (
+            <div style={{ fontSize: '0.85rem', color: '#555' }}>
+              <strong>{selectedAnnotation.category}</strong> • {selectedAnnotation.startOffset}-{selectedAnnotation.endOffset}
+            </div>
+          )}
+        </div>
+        <span className="collaboration-count">{comments.length} repl{comments.length === 1 ? 'y' : 'ies'}</span>
       </motion.header>
 
       <motion.section
@@ -70,8 +97,10 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
           <strong>Original note</strong>
           <span className="note-meta-author">Annotator</span>
         </div>
-        {originalNote ? (
-          <p>{originalNote}</p>
+        {!selectedAnnotation ? (
+          <p className="note-placeholder">Select an annotation from the left to open its thread.</p>
+        ) : selectedAnnotation.note ? (
+          <p>{selectedAnnotation.note}</p>
         ) : (
           <p className="note-placeholder">This annotator did not leave a note for this highlight.</p>
         )}
@@ -84,6 +113,11 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
         </div>
 
         <div className="conversation-feed">
+          {(!selectedAnnotation || !activeAnnId) && (
+            <div className="note-placeholder" style={{ padding: '12px 4px' }}>
+              No thread open. Choose an annotation to start.
+            </div>
+          )}
           {comments.map((comment, index) => {
             const bubbleClassName = `comment-bubble comment-bubble-${comment.role}`
             return (
@@ -122,6 +156,7 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           rows={3}
+          disabled={!activeAnnId}
         />
         <div className="composer-actions">
           <motion.button
@@ -130,15 +165,16 @@ const CollaborationPane = ({ originalNote = "The tone shifts sharply when discus
             onClick={handleEscalate}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
+            disabled={!activeAnnId}
           >
             Escalate
           </motion.button>
           <motion.button
             type="submit"
             className="composer-submit"
-            disabled={!draft.trim()}
-            whileHover={{ scale: draft.trim() ? 1.03 : 1 }}
-            whileTap={{ scale: draft.trim() ? 0.97 : 1 }}
+            disabled={!draft.trim() || !activeAnnId}
+            whileHover={{ scale: draft.trim() && activeAnnId ? 1.03 : 1 }}
+            whileTap={{ scale: draft.trim() && activeAnnId ? 0.97 : 1 }}
           >
             Reply
           </motion.button>

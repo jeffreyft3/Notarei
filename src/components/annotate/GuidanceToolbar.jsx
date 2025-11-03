@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 
-const GuidanceToolbar = ({ stage, setStage, annotations }) => {
+const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSelectAnnotation }) => {
   const [submittedData, setSubmittedData] = useState(null)
+  const [selectedReviewId, setSelectedReviewId] = useState(null)
 
   const instructions = [
     "Read through the article and highlight biased or notable passages.",
@@ -14,6 +15,17 @@ const GuidanceToolbar = ({ stage, setStage, annotations }) => {
 
   const stageLabel = stage === "reviewing" ? "Reviewing" : "Annotating"
 
+  // Color mapping for each bias category (kept consistent with canvas)
+  const categoryColors = {
+    'Loaded Language': '#ffeb3b',
+    'Framing': '#ff9800',
+    'Source Imbalance': '#f44336',
+    'Speculation': '#e91e63',
+    'Unverified': '#9c27b0',
+    'Omission': '#673ab7',
+    'Neutral': '#4caf50'
+  }
+
   // Load submitted annotations from localStorage when in reviewing mode
   useEffect(() => {
     if (stage === "reviewing") {
@@ -23,6 +35,21 @@ const GuidanceToolbar = ({ stage, setStage, annotations }) => {
       }
     }
   }, [stage])
+
+  // Clear canvas highlight when leaving reviewing or when list deselects
+  useEffect(() => {
+    if (onHoverAnnotation) {
+      // Only maintain highlight in reviewing when a selection exists
+      onHoverAnnotation(stage === 'reviewing' ? selectedReviewId : null)
+    }
+  }, [stage, selectedReviewId, onHoverAnnotation])
+
+  const handleReviewClick = (ann) => {
+    const nextId = selectedReviewId === (ann.id ?? null) ? null : (ann.id ?? null)
+    setSelectedReviewId(nextId)
+    onHoverAnnotation && onHoverAnnotation(nextId)
+    onSelectAnnotation && onSelectAnnotation(nextId ? ann : null)
+  }
 
   return (
     <motion.div
@@ -105,34 +132,47 @@ const GuidanceToolbar = ({ stage, setStage, annotations }) => {
                       borderRadius: '8px'
                     }}>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {submittedData.annotations.map((ann, index) => (
-                          <li key={ann.id || index} style={{ 
-                            marginBottom: '12px',
-                            padding: '10px',
-                            background: 'white',
-                            borderRadius: '6px',
-                            borderLeft: '3px solid var(--primary)'
-                          }}>
-                            <strong style={{ color: 'var(--primary)' }}>{ann.category}</strong>
-                            <p style={{ 
-                              margin: '5px 0 0 0', 
-                              fontSize: '0.9em',
-                              fontStyle: 'italic',
-                              color: '#555'
-                            }}>
-                              "{ann.text}"
-                            </p>
-                            {ann.note && (
+                        {submittedData.annotations.map((ann, index) => {
+                          const active = selectedReviewId === (ann.id ?? null)
+                          const color = categoryColors[ann.category] || 'var(--primary)'
+                          return (
+                            <li
+                              key={ann.id || index}
+                              onClick={() => handleReviewClick(ann)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleReviewClick(ann) } }}
+                              style={{ 
+                                marginBottom: '12px',
+                                padding: '10px',
+                                background: active ? 'rgba(0,0,0,0.03)' : 'white',
+                                borderRadius: '6px',
+                                borderLeft: `4px solid ${color}`,
+                                cursor: 'pointer',
+                                boxShadow: active ? '0 0 0 2px rgba(0,0,0,0.05) inset' : 'none'
+                              }}
+                            >
+                              <strong style={{ color: '#222', background: color, padding: '2px 6px', borderRadius: '4px' }}>{ann.category}</strong>
                               <p style={{ 
                                 margin: '5px 0 0 0', 
-                                fontSize: '0.85em',
-                                color: '#666'
+                                fontSize: '0.9em',
+                                fontStyle: 'italic',
+                                color: '#555'
                               }}>
-                                Note: {ann.note}
+                                "{ann.text}"
                               </p>
-                            )}
-                          </li>
-                        ))}
+                              {ann.note && (
+                                <p style={{ 
+                                  margin: '5px 0 0 0', 
+                                  fontSize: '0.85em',
+                                  color: '#666'
+                                }}>
+                                  Note: {ann.note}
+                                </p>
+                              )}
+                            </li>
+                          )
+                        })}
                       </ul>
                     </div>
                   </div>
