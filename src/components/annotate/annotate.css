@@ -32,8 +32,18 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
 
+  /* Generic layered highlight wrapper used for nested annotations */
+  .annotation-layer {
+    display: inline;
+    padding: 0 2px;
+    border-radius: 3px;
+    position: relative;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone; /* keep background continuous across line wraps */
+  }
+
   .annotation-text-content {
-    line-height: 2;
+    line-height: 2.2; /* slightly taller lines to accommodate thicker outer highlight band */
     letter-spacing: 0.2px;
   }
 
@@ -300,20 +310,6 @@
     }
   }
 
-  @media (min-width: 1100px) and (max-width: 1500px) {
-    .guidancePaneWrapper,
-    .rightPaneWrapper {
-      flex: 0 0 220px;
-      max-width: 220px;
-      min-width: 220px;
-    }
-
-    .canvasMainWrapper {
-      flex: 1 1 calc(100% - 440px);
-      min-width: 300px;
-    }
-  }
-
   /* Annotations list in right pane */
   .annotations-list {
       background: white;
@@ -342,7 +338,10 @@
   }
 
   .annotation-window {
+    max-height: 90vh;
+    overflow: auto;
     color: #000;
+    width: 400px;
   }
 
   .annotation-window h3 {

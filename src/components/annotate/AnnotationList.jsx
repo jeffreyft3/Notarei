@@ -2,25 +2,30 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 
-const AnnotationList = ({ annotations, onRemoveAnnotation, onSubmit }) => {
+const AnnotationList = ({ annotations, onRemoveAnnotation }) => {
   // Color mapping for each bias category
   const categoryColors = {
     'Loaded Language': '#ffeb3b',
     'Framing': '#ff9800',
-    'False Balance': '#f44336',
-    'Cherry Picking': '#e91e63',
-    'Sensationalism': '#9c27b0',
-    'Misleading Headlines': '#673ab7',
-    'Source Bias': '#3f51b5',
-    'Statistical Manipulation': '#2196f3'
+    'Source Imbalance': '#f44336',
+    'Speculation': '#e91e63',
+    'Unverified': '#9c27b0',
+    'Omission': '#673ab7',
+    'Neutral': '#4caf50'
   }
 
   const handleSubmit = () => {
     if (annotations && annotations.length > 0) {
-      const success = onSubmit()
-      if (success) {
-        alert(`Successfully submitted ${annotations.length} annotation${annotations.length > 1 ? 's' : ''}! Switching to review mode.`)
+      // Save annotations to localStorage with timestamp
+      const submissionData = {
+        annotations: annotations,
+        submittedAt: new Date().toISOString(),
+        totalCount: annotations.length
       }
+      localStorage.setItem('submittedAnnotations', JSON.stringify(submissionData))
+      
+      // Show success message
+      alert(`Successfully submitted ${annotations.length} annotation${annotations.length > 1 ? 's' : ''}! You can now view them in the Review section.`)
     } else {
       alert('No annotations to submit!')
     }

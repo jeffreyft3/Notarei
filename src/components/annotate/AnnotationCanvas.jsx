@@ -14,24 +14,22 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   const biasCategories = [
     'Loaded Language',
     'Framing',
-    'False Balance',
-    'Cherry Picking',
-    'Sensationalism',
-    'Misleading Headlines',
-    'Source Bias',
-    'Statistical Manipulation'
+    'Source Imbalance',
+    'Speculation',
+    'Unverified',
+    'Omission',
+    'Neutral'
   ]
 
   // Color mapping for each bias category
   const categoryColors = {
     'Loaded Language': '#ffeb3b',
     'Framing': '#ff9800',
-    'False Balance': '#f44336',
-    'Cherry Picking': '#e91e63',
-    'Sensationalism': '#9c27b0',
-    'Misleading Headlines': '#673ab7',
-    'Source Bias': '#3f51b5',
-    'Statistical Manipulation': '#2196f3'
+    'Source Imbalance': '#f44336',
+    'Speculation': '#e91e63',
+    'Unverified': '#9c27b0',
+    'Omission': '#673ab7',
+    'Neutral': '#4caf50'
   }
 
   // Get absolute character position in the text content
@@ -172,90 +170,160 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
     window.getSelection().removeAllRanges()
   }
 
-  // Create highlight spans for text rendering
-  const createHighlightedText = () => {
-    // Combine all annotations with pending selection for rendering
-    const allHighlights = [...annotations]
-    if (pendingSelection) {
-      allHighlights.push({
-        ...pendingSelection,
-        category: 'pending',
-        isPending: true
-      })
+  // Build non-duplicating segments with active annotation stack for nested rendering
+  const buildSegments = () => {
+    // Normalize and include pending selection as an annotation layer
+    const all = [
+      ...annotations.filter(a => a && a.startOffset < a.endOffset),
+      ...(pendingSelection ? [{ ...pendingSelection, category: 'pending', isPending: true }] : [])
+    ]
+
+    if (all.length === 0) return [{ start: 0, end: articleText.length, active: [] }]
+
+    const events = []
+    for (const ann of all) {
+      events.push({ pos: ann.startOffset, type: 'start', ann })
+      events.push({ pos: ann.endOffset, type: 'end', ann })
     }
+    // Sort events; for same position, process 'end' before 'start' to avoid zero-length layers
+    events.sort((a, b) => a.pos - b.pos || (a.type === 'end' ? -1 : 1))
 
-    // Sort by start position to handle overlapping correctly
-    allHighlights.sort((a, b) => a.startOffset - b.startOffset)
-
-    if (allHighlights.length === 0) {
-      return [{ type: 'text', content: articleText }]
-    }
-
-    const parts = []
-    let currentPos = 0
-
-    allHighlights.forEach((highlight) => {
-      // Add text before highlight
-      if (highlight.startOffset > currentPos) {
-        parts.push({
-          type: 'text',
-          content: articleText.slice(currentPos, highlight.startOffset)
-        })
+    const segments = []
+    let lastPos = 0
+    let active = []
+    let i = 0
+    while (i < events.length) {
+      const currentPos = events[i].pos
+      if (currentPos > lastPos) {
+        segments.push({ start: lastPos, end: currentPos, active: [...active] })
+        lastPos = currentPos
       }
-
-      // Add highlighted text
-      parts.push({
-        type: 'highlight',
-        content: articleText.slice(highlight.startOffset, highlight.endOffset),
-        annotation: highlight
-      })
-
-      currentPos = Math.max(currentPos, highlight.endOffset)
-    })
-
-    // Add remaining text
-    if (currentPos < articleText.length) {
-      parts.push({
-        type: 'text',
-        content: articleText.slice(currentPos)
-      })
+      // consume all events at this position
+      let j = i
+      while (j < events.length && events[j].pos === currentPos) j++
+      // first remove ended
+      for (let k = i; k < j; k++) {
+        if (events[k].type === 'end') {
+          const id = events[k].ann.id
+          active = active.filter(a => a.id !== id)
+        }
+      }
+      // then add started
+      for (let k = i; k < j; k++) {
+        if (events[k].type === 'start') {
+          active.push(events[k].ann)
+        }
+      }
+      i = j
     }
-
-    return parts
+    if (lastPos < articleText.length) {
+      segments.push({ start: lastPos, end: articleText.length, active: [...active] })
+    }
+    return segments
   }
 
-  // Render the text with highlights
+  // Render segments as nested spans from outer (longest) to inner (shortest)
   const renderHighlightedText = () => {
-    const parts = createHighlightedText()
-    
-    return parts.map((part, index) => {
-      if (part.type === 'text') {
-        return <span key={index}>{part.content}</span>
+    const segments = buildSegments()
+
+    const hexToRgba = (hex, alpha = 1) => {
+      const m = hex.replace('#','')
+      const bigint = parseInt(m.length === 3 ? m.split('').map(c=>c+c).join('') : m, 16)
+      const r = (bigint >> 16) & 255
+      const g = (bigint >> 8) & 255
+      const b = bigint & 255
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`
+    }
+    const getBaseColor = (ann) => ann?.isPending
+      ? '#007acc' // base blue for pending; we'll apply alpha below
+      : (categoryColors[ann.category] || '#ffeb3b')
+
+    const annLen = (a) => (a.endOffset - a.startOffset)
+    const getOuter = (active) => {
+      if (!active || active.length === 0) return null
+      let best = active[0]
+      for (let i = 1; i < active.length; i++) {
+        if (annLen(active[i]) > annLen(best)) best = active[i]
+      }
+      return best
+    }
+    const sameActive = (a1, a2) => {
+      if (a1.length !== a2.length) return false
+      const ids1 = a1.map(a => a.id).sort()
+      const ids2 = a2.map(a => a.id).sort()
+      for (let i = 0; i < ids1.length; i++) if (ids1[i] !== ids2[i]) return false
+      return true
+    }
+
+    // Merge adjacent segments with identical active sets to reduce visual seams
+    const merged = []
+    for (const seg of segments) {
+      if (merged.length && sameActive(merged[merged.length - 1].active, seg.active)) {
+        merged[merged.length - 1].end = seg.end
       } else {
-        const { annotation } = part
-        const backgroundColor = annotation.isPending 
-          ? 'rgba(0, 122, 204, 0.3)' 
-          : categoryColors[annotation.category] || '#ffeb3b'
-        
+        merged.push({ ...seg })
+      }
+    }
+
+    // Recursively render continuous wrappers for each nesting level (supports >1 nested)
+    const groupByOuter = (segs, outerToSkip) => {
+      const groups = []
+      let current = null
+      for (const seg of segs) {
+        const filteredActive = seg.active.filter(a => !outerToSkip || a.id !== outerToSkip.id)
+        const outer = getOuter(filteredActive)
+        const outerId = outer ? outer.id : null
+        if (!current || current.outerId !== outerId) {
+          current = { outerId, outer, segs: [] }
+          groups.push(current)
+        }
+        // Store filtered active in segment clone to avoid recomputing
+        current.segs.push({ ...seg, active: filteredActive })
+      }
+      return groups
+    }
+
+    const renderGroups = (segs, outerToSkip = null, depth = 0) => {
+      const groups = groupByOuter(segs, outerToSkip)
+      return groups.map((group, gIdx) => {
+        // If no active annotations at this level, render plain text for all segs
+        if (!group.outer) {
+          // Combine adjacent text spans for performance
+          const pieces = group.segs.map((seg, sIdx) => (
+            <span key={`txt-${depth}-${gIdx}-${sIdx}`}>{articleText.slice(seg.start, seg.end)}</span>
+          ))
+          return <span key={`grp-${depth}-${gIdx}`}>{pieces}</span>
+        }
+
+        // Render inner content recursively removing the current outer
+        const inner = renderGroups(group.segs, group.outer, depth + 1)
+
+        // Style this level
+        const base = getBaseColor(group.outer)
+        let alpha
+        if (group.outer.isPending) {
+          alpha = 0.45
+        } else {
+          alpha = depth === 0 ? 0.7 : depth === 1 ? 0.85 : 0.95
+        }
+        const color = hexToRgba(base, alpha)
+        const padY = depth === 0 ? 6 : 2
+        const padX = 0
         return (
           <span
-            key={index}
-            style={{
-              backgroundColor,
-              padding: '2px 4px',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              position: 'relative',
-              border: annotation.isPending ? '2px dashed #007acc' : 'none'
-            }}
-            title={annotation.isPending ? 'Pending annotation' : `${annotation.category}: ${annotation.note}`}
-            data-annotation-id={annotation.id}
+            key={`grp-${depth}-${gIdx}`}
+            className="annotation-layer"
+            data-annotation-id={group.outer.id}
+            title={`${group.outer.category || (group.outer.isPending ? 'Pending' : '')}${group.outer.note ? `: ${group.outer.note}` : ''}`}
+            style={{ backgroundColor: color, padding: `${padY}px ${padX}px`, borderRadius: 0 }}
           >
-            {part.content}
+            {inner}
           </span>
         )
-      }
-    })
+      })
+    }
+
+    return renderGroups(merged)
   }
 
   useEffect(() => {
@@ -314,7 +382,6 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
             right: '20px',
             top: '50%',
             transform: 'translateY(-50%)',
-            width: '300px',
             backgroundColor: 'white',
             border: '1px solid #ddd',
             borderRadius: '8px',
