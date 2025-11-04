@@ -57,11 +57,15 @@
     transform: scale(1.02);
     opacity: 1;
   }
-}  .annotation-text-content {
+}
+
+  .annotation-text-content {
     line-height: 2.2; /* slightly taller lines to accommodate thicker outer highlight band */
     letter-spacing: 0.2px;
     max-height: 70vh;
     overflow: scroll;
+    white-space: pre-wrap; /* preserve \n line breaks and wrap long lines */
+    word-break: break-word; /* avoid overflow for long tokens */
   }
 
   /* Custom selection styling for annotation canvas */

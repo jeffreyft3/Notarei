@@ -128,7 +128,7 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                       maxHeight: '400px', 
                       overflowY: 'auto',
                       padding: '10px',
-                      background: 'rgba(226, 125, 96, 0.05)',
+                      background: 'rgba(228, 136, 110, 0.2)',
                       borderRadius: '8px'
                     }}>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -145,7 +145,7 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                               style={{ 
                                 marginBottom: '12px',
                                 padding: '10px',
-                                background: active ? 'rgba(0,0,0,0.03)' : 'white',
+                                background: active ? 'hsla(44, 100%, 56%, 0.44)' : 'white',
                                 borderRadius: '6px',
                                 borderLeft: `4px solid ${color}`,
                                 cursor: 'pointer',
@@ -154,18 +154,19 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                             >
                               <strong style={{ color: '#222', background: color, padding: '2px 6px', borderRadius: '4px' }}>{ann.category}</strong>
                               <p style={{ 
-                                margin: '5px 0 0 0', 
+                                margin: '8px 0 0 0', 
                                 fontSize: '0.9em',
-                                fontStyle: 'italic',
-                                color: '#555'
+                                color: '#555',
+                                whiteSpace: 'pre-wrap'
                               }}>
-                                "{ann.text}"
+                                  "{ann.text}"
                               </p>
                               {ann.note && (
                                 <p style={{ 
                                   margin: '5px 0 0 0', 
                                   fontSize: '0.85em',
-                                  color: '#666'
+                                  color: '#666',
+                                  whiteSpace: 'pre-wrap'
                                 }}>
                                   Note: {ann.note}
                                 </p>
