@@ -104,6 +104,13 @@
     box-sizing: border-box;
   }
 
+  .canvasHeaderWrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
   .annotation-actions button {
     cursor: pointer;
     color: white;
@@ -679,4 +686,73 @@
 .dev-clear-storage-btn:focus-visible {
   outline: 3px solid rgba(198, 40, 40, 0.5);
   outline-offset: 2px;
+}
+
+/* Sentence Canvas Styles */
+.sentence-canvas {
+  background: #ffffff;
+  border: 1px solid rgba(226, 125, 96, 0.25);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+  color: #2f231f;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.sentence-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.sentence-row:hover {
+  background: rgba(226, 125, 96, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(226, 125, 96, 0.25);
+}
+
+.sentence-row.active {
+  background: rgba(226, 125, 96, 0.12);
+  box-shadow: inset 0 0 0 2px rgba(226, 125, 96, 0.25);
+}
+
+.sentence-number {
+  text-align: right;
+  color: #8a5c4d;
+  font-weight: 700;
+  opacity: 0.8;
+  user-select: none;
+  padding-top: 8px;
+}
+
+.sentence-text {
+  padding: 6px 10px;
+  border-radius: 6px;
+  line-height: 1.6;
+  letter-spacing: 0.2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.sentence-text.pre-highlight {
+  background: rgba(226, 125, 96, 0.12); /* soft pre-highlight */
+}
+
+.sentence-row:hover .sentence-text.pre-highlight {
+  background: rgba(226, 125, 96, 0.2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.sentence-empty {
+  padding: 24px;
+  text-align: center;
+  color: #666;
 }

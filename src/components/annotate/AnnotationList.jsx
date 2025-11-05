@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './annotate.css'
+import { categoryColors, getAnnotationHexColor } from './colorUtils'
 
 const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, onHoverAnnotation }) => {
   const [editingAnnotation, setEditingAnnotation] = useState(null)
   const [editCategory, setEditCategory] = useState('')
+  const [editSecondaryCategory, setEditSecondaryCategory] = useState('')
   const [editNote, setEditNote] = useState('')
   const [selectOpen, setSelectOpen] = useState(false)
 
@@ -19,16 +21,7 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
     'Neutral'
   ]
 
-  // Color mapping for each bias category (needed for dynamic border-left color)
-  const categoryColors = {
-    'Loaded Language': '#ffeb3b',
-    'Framing': '#ff9800',
-    'Source Imbalance': '#f44336',
-    'Speculation': '#e91e63',
-    'Unverified': '#9c27b0',
-    'Omission': '#673ab7',
-    'Neutral': '#4caf50'
-  }
+  // Color mapping moved to colorUtils
 
   const handleSubmit = () => {
     if (annotations && annotations.length > 0) {
@@ -49,7 +42,8 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
 
   const handleEditClick = (annotation) => {
     setEditingAnnotation(annotation)
-    setEditCategory(annotation.category)
+    setEditCategory(annotation.primaryCategory || annotation.category)
+    setEditSecondaryCategory(annotation.secondaryCategory || '')
     setEditNote(annotation.note || '')
     // Set hover effect when editing starts
     onHoverAnnotation && onHoverAnnotation(annotation.id)
@@ -65,11 +59,15 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
   const handleSaveEdit = () => {
     if (editingAnnotation && editCategory) {
       onUpdateAnnotation(editingAnnotation.id, {
+        // keep backward compat field
         category: editCategory,
+        primaryCategory: editCategory,
+        secondaryCategory: editSecondaryCategory,
         note: editNote
       })
       setEditingAnnotation(null)
       setEditCategory('')
+      setEditSecondaryCategory('')
       setEditNote('')
       // Clear hover effect when editing is saved
       onHoverAnnotation && onHoverAnnotation(null)
@@ -125,17 +123,22 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
               }
             }}
             style={{
-              border: `3px solid ${categoryColors[annotation.category] || '#ccc'}`
+              border: `3px solid ${getAnnotationHexColor(annotation) || '#ccc'}`
             }}
           >
             <div className="annotation-item-wrapper">
               <div className="annotation-item-content">
                 <strong 
                   className='annotation-item-label' 
-                  style={{ background: categoryColors[annotation.category], color: '#222' }}
+                  style={{ background: getAnnotationHexColor(annotation), color: '#222' }}
                 >
-                  {annotation.category}
+                  {annotation.primaryCategory || annotation.category}
                 </strong>
+                {annotation.secondaryCategory && (
+                  <div style={{ marginTop: 4, fontSize: '0.85em', color: '#555' }}>
+                    Secondary: {annotation.secondaryCategory}
+                  </div>
+                )}
                 <p className="annotation-item-text">
                   "{annotation.text}"
                 </p>
@@ -191,7 +194,7 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
             </div>
 
             <div className="annotation-form-group bias-category-selection">
-              <label className="annotation-form-label">Bias Category:</label>
+              <label className="annotation-form-label">Primary Bias Category:</label>
               <div className={`custom-select-wrapper${selectOpen ? ' open' : ''}`}>
                 <select
                   value={editCategory}
@@ -199,7 +202,26 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
                   onFocus={() => setSelectOpen(true)}
                   onBlur={() => setSelectOpen(false)}
                 >
-                  <option value="">Select a category</option>
+                  <option value="">Select a primary category</option>
+                  {biasCategories.map((category, index) => (
+                    <option key={index} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="annotation-form-group bias-category-selection">
+              <label className="annotation-form-label">Secondary Bias Category (optional):</label>
+              <div className={`custom-select-wrapper${selectOpen ? ' open' : ''}`}>
+                <select
+                  value={editSecondaryCategory}
+                  onChange={(e) => setEditSecondaryCategory(e.target.value)}
+                  onFocus={() => setSelectOpen(true)}
+                  onBlur={() => setSelectOpen(false)}
+                >
+                  <option value="">None</option>
                   {biasCategories.map((category, index) => (
                     <option key={index} value={category}>
                       {category}
