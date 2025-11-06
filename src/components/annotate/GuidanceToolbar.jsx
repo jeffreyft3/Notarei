@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import { categoryColors, getAnnotationHexColor } from './colorUtils'
 
 const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSelectAnnotation }) => {
   const [submittedData, setSubmittedData] = useState(null)
@@ -15,16 +16,7 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
 
   const stageLabel = stage === "reviewing" ? "Reviewing" : "Annotating"
 
-  // Color mapping for each bias category (kept consistent with canvas)
-  const categoryColors = {
-    'Loaded Language': '#ffeb3b',
-    'Framing': '#ff9800',
-    'Source Imbalance': '#f44336',
-    'Speculation': '#e91e63',
-    'Unverified': '#9c27b0',
-    'Omission': '#673ab7',
-    'Neutral': '#4caf50'
-  }
+  // Colors provided by colorUtils
 
   // Load submitted annotations from localStorage when in reviewing mode
   useEffect(() => {
@@ -134,7 +126,7 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {submittedData.annotations.map((ann, index) => {
                           const active = selectedReviewId === (ann.id ?? null)
-                          const color = categoryColors[ann.category] || 'var(--primary)'
+                          const color = getAnnotationHexColor(ann) || 'var(--primary)'
                           return (
                             <li
                               key={ann.id || index}
@@ -156,17 +148,15 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                               <p style={{ 
                                 margin: '8px 0 0 0', 
                                 fontSize: '0.9em',
-                                color: '#555',
-                                whiteSpace: 'pre-wrap'
+                                color: '#555'
                               }}>
-                                  "{ann.text}"
+                                "{ann.text}"
                               </p>
                               {ann.note && (
                                 <p style={{ 
                                   margin: '5px 0 0 0', 
                                   fontSize: '0.85em',
-                                  color: '#666',
-                                  whiteSpace: 'pre-wrap'
+                                  color: '#666'
                                 }}>
                                   Note: {ann.note}
                                 </p>

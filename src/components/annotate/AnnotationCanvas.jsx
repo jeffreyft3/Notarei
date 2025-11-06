@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './annotate.css'
+import { categoryColors, asRgba, getAnnotationHexColor } from './colorUtils'
+import AnnotationWindow from './AnnotationWindow'
 
 const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveAnnotation, hoveredAnnotationId }) => {
   const [pendingSelection, setPendingSelection] = useState(null) // Current selection being annotated
@@ -21,16 +23,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
     'Neutral'
   ]
 
-  // Color mapping for each bias category
-  const categoryColors = {
-    'Loaded Language': '#ffeb3b',
-    'Framing': '#ff9800',
-    'Source Imbalance': '#f44336',
-    'Speculation': '#e91e63',
-    'Unverified': '#9c27b0',
-    'Omission': '#673ab7',
-    'Neutral': '#4caf50'
-  }
+  // Color mapping moved to colorUtils
 
   // Get absolute character position in the text content
   const getAbsoluteOffset = (container, node, offset) => {
@@ -90,7 +83,8 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
           setShowAnnotationWindow(true)
           setCurrentAnnotation({
             text: selectedText,
-            category: '',
+            primaryCategory: '',
+            secondaryCategory: '',
             note: ''
           })
           
@@ -114,12 +108,15 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   }
 
   // Add annotation
-  const addAnnotation = (category, note = '') => {
+  const addAnnotation = (primaryCategory, secondaryCategory = '', note = '') => {
     if (pendingSelection && currentAnnotation) {
       const newAnnotation = {
         id: Date.now(),
         text: pendingSelection.text,
-        category,
+        // Keep backward compatibility with existing code by mirroring primary into category
+        category: primaryCategory,
+        primaryCategory,
+        secondaryCategory,
         note,
         startOffset: pendingSelection.startOffset,
         endOffset: pendingSelection.endOffset,
@@ -142,9 +139,15 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   }
 
   // Handle annotation category selection
-  const handleCategorySelect = (category) => {
+  const handlePrimarySelect = (primaryCategory) => {
     if (currentAnnotation) {
-      setCurrentAnnotation(prev => ({ ...prev, category }))
+      setCurrentAnnotation(prev => ({ ...prev, primaryCategory }))
+    }
+  }
+
+  const handleSecondarySelect = (secondaryCategory) => {
+    if (currentAnnotation) {
+      setCurrentAnnotation(prev => ({ ...prev, secondaryCategory }))
     }
   }
 
@@ -157,8 +160,8 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
 
   // Save current annotation
   const saveAnnotation = () => {
-    if (currentAnnotation && currentAnnotation.category) {
-      addAnnotation(currentAnnotation.category, currentAnnotation.note)
+    if (currentAnnotation && currentAnnotation.primaryCategory) {
+      addAnnotation(currentAnnotation.primaryCategory, currentAnnotation.secondaryCategory, currentAnnotation.note)
     }
   }
 
@@ -226,17 +229,9 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   const renderHighlightedText = () => {
     const segments = buildSegments()
 
-    const hexToRgba = (hex, alpha = 1) => {
-      const m = hex.replace('#','')
-      const bigint = parseInt(m.length === 3 ? m.split('').map(c=>c+c).join('') : m, 16)
-      const r = (bigint >> 16) & 255
-      const g = (bigint >> 8) & 255
-      const b = bigint & 255
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`
-    }
     const getBaseColor = (ann) => ann?.isPending
       ? '#007acc' // base blue for pending; we'll apply alpha below
-      : (categoryColors[ann.category] || '#ffeb3b')
+      : getAnnotationHexColor(ann)
 
     const annLen = (a) => (a.endOffset - a.startOffset)
     const getOuter = (active) => {
@@ -310,7 +305,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
         } else {
           alpha = depth === 0 ? 0.5 : depth === 1 ? 0.65 : 0.75
         }
-        const color = hexToRgba(base, alpha)
+  const color = asRgba(base, alpha)
         const padY = depth === 0 ? 6 : 2
         const padX = 0
         
@@ -326,7 +321,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
             key={`grp-${depth}-${gIdx}`}
             className={`annotation-layer ${isHovered ? 'annotation-layer-hovered' : ''}`}
             data-annotation-id={group.outer.id}
-            title={`${group.outer.category || (group.outer.isPending ? 'Pending' : '')}${group.outer.note ? `: ${group.outer.note}` : ''}`}
+            title={`${(group.outer.primaryCategory || group.outer.category || (group.outer.isPending ? 'Pending' : ''))}${group.outer.secondaryCategory ? ` + ${group.outer.secondaryCategory}` : ''}${group.outer.note ? `: ${group.outer.note}` : ''}`}
             style={{ 
               backgroundColor: color, 
               padding: `${padY}px ${padX}px`, 
@@ -350,6 +345,18 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
     }
   }, [])
 
+  // Close annotation window on Escape
+  useEffect(() => {
+    const onEsc = (e) => {
+      if (e.key !== 'Escape') return
+      if (!showAnnotationWindow) return
+      e.preventDefault()
+      cancelAnnotation()
+    }
+    window.addEventListener('keydown', onEsc, { capture: true })
+    return () => window.removeEventListener('keydown', onEsc, { capture: true })
+  }, [showAnnotationWindow])
+
   return (
     <motion.div
       className="annotation-canvas-container"
@@ -358,7 +365,6 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
       transition={{ duration: 0.45, ease: 'easeOut' }}
     >
       <div className="annotation-canvas-header">
-        <h2>Annotation Canvas</h2>
         <div className="annotation-stats">
           {annotations.length} annotation(s)
           {pendingSelection && <span style={{ color: '#007acc', marginLeft: '10px', fontWeight: 700 }}>• Pending selection</span>}
@@ -393,97 +399,19 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
       {/* Annotation Window - Fixed on right side */}
       <AnimatePresence mode="wait">
         {showAnnotationWindow && pendingSelection && (
-          <motion.div 
-            key="new-annotation-window"
-            className="annotation-window"
-            initial={{ opacity: 0, scale: 0.95, y: '-45%' }}
-            animate={{ opacity: 1, scale: 1, y: '-50%' }}
-            exit={{ opacity: 0, scale: 0.95, y: '-45%' }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            style={{
-              position: 'fixed',
-              right: '20px',
-              top: '50%',
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              padding: '20px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 1000
-            }}
-          >
-            <h3>Annotate Selection</h3>
-            
-            <div className="selected-text" style={{ margin: '10px 0', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-              <strong>Selected text:</strong>
-              <p>"{pendingSelection.text}"</p>
-              <small style={{ color: '#666' }}>
-                Characters {pendingSelection.startOffset}-{pendingSelection.endOffset}
-              </small>
-            </div>
-
-            <div className="bias-category-selection">
-              <label>Bias Category:</label>
-              <div className={`custom-select-wrapper${selectOpen ? ' open' : ''}`}>
-                <select
-                  value={currentAnnotation?.category || ''}
-                  onChange={(e) => handleCategorySelect(e.target.value)}
-                  onFocus={() => setSelectOpen(true)}
-                  onBlur={() => setSelectOpen(false)}
-                >
-                  <option value="">Select a category</option>
-                  {biasCategories.map((category, index) => (
-                    <option key={index} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="annotation-note">
-              <label>Note (optional):</label>
-              <textarea
-                value={currentAnnotation?.note || ''}
-                onChange={(e) => handleNoteChange(e.target.value)}
-                placeholder="Add a note about this annotation..."
-                style={{ 
-                }}
-              />
-            </div>
-
-            <div className="annotation-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-              <button 
-                onClick={saveAnnotation}
-                disabled={!currentAnnotation?.category}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  backgroundColor: currentAnnotation?.category ? '#007acc' : '#ccc',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: currentAnnotation?.category ? 'pointer' : 'not-allowed'
-                }}
-              >
-                Save
-              </button>
-              <button 
-                onClick={cancelAnnotation}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  backgroundColor: '#666',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </motion.div>
+          <AnnotationWindow
+            pendingSelection={pendingSelection}
+            currentAnnotation={currentAnnotation}
+            biasCategories={biasCategories}
+            selectOpen={selectOpen}
+            setSelectOpen={setSelectOpen}
+            onPrimaryChange={handlePrimarySelect}
+            onSecondaryChange={handleSecondarySelect}
+            onNoteChange={handleNoteChange}
+            onSave={saveAnnotation}
+            onCancel={cancelAnnotation}
+            title="Annotate Selection"
+          />
         )}
       </AnimatePresence>
     </motion.div>
