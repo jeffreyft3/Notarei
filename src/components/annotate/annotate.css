@@ -379,7 +379,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin-top: 15px;
   }
   .annotation-item-secondary-label {
     display: inline-block;
