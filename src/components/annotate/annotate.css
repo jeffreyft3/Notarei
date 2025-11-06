@@ -369,10 +369,28 @@
       font-family: var(--font-body);
   }
   .annotation-item-label {
-    margin-top: 15px;
     padding: 5px 10px;
     
     border-radius: 5px;
+  }
+  /* Container for primary + secondary labels on one line with wrap */
+  .annotation-item-labels {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+  }
+  .annotation-item-secondary-label {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 5px;
+    background: #f7f7f7;
+    border: 1.5px solid #e5e5e5; /* color overridden inline via style borderColor */
+    color: #555;
+    font-size: 0.85em;
+    line-height: 1.2;
+    white-space: nowrap;
   }
 
   .annotation-item {
@@ -701,6 +719,35 @@
   box-sizing: border-box;
   max-height: 70vh;
   overflow: auto;
+}
+
+/* Meta header above sentence canvas */
+.sentence-canvas-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0 8px;
+  font-size: 0.9rem;
+  color: #7b7e83; /* gray-500 */
+  opacity: 0.8;
+}
+
+.sentence-canvas-meta-left {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sentence-canvas-meta-current {
+  color: inherit;
+}
+
+.sentence-canvas-meta-right {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .sentence-row {

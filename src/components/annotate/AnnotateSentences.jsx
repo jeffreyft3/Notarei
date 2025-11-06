@@ -1,6 +1,6 @@
 "use client"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import "./annotate.css"
 import { asRgba, getAnnotationHexColor } from "./colorUtils"
 import AnnotationWindow from './AnnotationWindow'
@@ -167,15 +167,40 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
         )
     }
 
+        const total = articleSentences.length
+        const currentIndex = activeIndex >= 0 ? activeIndex + 1 : 1
+        const currentText = activeIndex >= 0 ? articleSentences[activeIndex]?.text : null
+
         return (
             <>
-                <div
+                {/* Meta header: current sentence and keyboard help */}
+                <div className="sentence-canvas-meta" aria-live="polite">
+                    <div className="sentence-canvas-meta-left">
+                        <span style={{
+                            fontWeight: '600'
+                        }}>Sentence {currentIndex}/{total}</span>
+                        {currentText ? (
+                            <span className="sentence-canvas-meta-current"> — {currentText}</span>
+                        ) : null}
+                    </div>
+                    <div className="sentence-canvas-meta-right" aria-hidden>
+                         <span style={{
+                            fontWeight:700
+                        }}>⬆/⬇</span> navigate • ⏎ annotate • <span style={{
+                            fontWeight:600
+                        }}>ESC </span> close
+                    </div>
+                </div>
+                <motion.div
                 className="sentence-canvas"
                 role="list"
                 aria-label="Sentence canvas"
                 tabIndex={0}
                     ref={containerRef}
                 onKeyDown={onKeyDown}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: 'easeOut' }}
             >
             {articleSentences.map((s, i) => (
                 <div
@@ -205,7 +230,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                     })()}
                 </div>
             ))}
-    </div>
+    </motion.div>
         <AnimatePresence mode="wait">
                     {showAnnotationWindow && pendingSelection && (
                         <AnnotationWindow
