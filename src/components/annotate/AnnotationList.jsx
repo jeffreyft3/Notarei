@@ -128,17 +128,23 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
           >
             <div className="annotation-item-wrapper">
               <div className="annotation-item-content">
-                <strong 
-                  className='annotation-item-label' 
-                  style={{ background: getAnnotationHexColor(annotation), color: '#222' }}
-                >
-                  {annotation.primaryCategory || annotation.category}
-                </strong>
-                {annotation.secondaryCategory && (
-                  <div style={{ marginTop: 4, fontSize: '0.85em', color: '#555' }}>
-                    Secondary: {annotation.secondaryCategory}
-                  </div>
-                )}
+                <div className="annotation-item-labels">
+                  <strong 
+                    className='annotation-item-label' 
+                    style={{ background: getAnnotationHexColor(annotation), color: '#222', marginTop: 0 }}
+                  >
+                    {annotation.primaryCategory || annotation.category}
+                  </strong>
+                  {annotation.secondaryCategory && (
+                    <span
+                      className='annotation-item-secondary-label'
+                      title='Secondary bias'
+                      style={{ borderColor: categoryColors[annotation.secondaryCategory] || '#e5e5e5' }}
+                    >
+                      {annotation.secondaryCategory}
+                    </span>
+                  )}
+                </div>
                 <p className="annotation-item-text">
                   "{annotation.text}"
                 </p>

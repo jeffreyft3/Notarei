@@ -3,17 +3,26 @@
 // Base color mapping for categories
 export const categoryColors = {
   'Loaded Language': '#ffeb3b', // yellow
-  'Framing': '#0077ffff',         // blue
+  'Framing': '#1180ffff',         // blue
   'Source Imbalance': '#f44336',// red
   'Speculation': '#e91e63',     // pink/red
   'Unverified': '#9c27b0',      // purple
-  'Omission': '#673ab7',        // deep purple
-  'Neutral': '#4caf50'          // green
+  'Omission': '#a069ffff',        // deep purple
+  'Neutral': '#4ad54fff'          // green
 }
 
 export function hexToRgb(hex) {
   if (!hex) return { r: 0, g: 0, b: 0 }
-  const h = hex.replace('#', '')
+  let h = hex.replace('#', '').trim()
+  // Support #RGBA and #RRGGBBAA by dropping alpha; normalize to 6-digit
+  if (h.length === 4) {
+    // #RGBA -> expand then drop alpha
+    const exp = h.split('').map((c) => c + c).join('') // RRGGBBAA
+    h = exp.slice(0, 6)
+  } else if (h.length === 8) {
+    // #RRGGBBAA -> drop alpha
+    h = h.slice(0, 6)
+  }
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
   const num = parseInt(full, 16)
   return {
