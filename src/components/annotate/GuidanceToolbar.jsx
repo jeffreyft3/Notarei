@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { categoryColors, getAnnotationHexColor } from './colorUtils'
 
-const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSelectAnnotation }) => {
+
+
+const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSelectAnnotation, peerSubmittedData }) => {
   const [submittedData, setSubmittedData] = useState(null)
   const [selectedReviewId, setSelectedReviewId] = useState(null)
 
@@ -18,6 +20,8 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
 
   // Colors provided by colorUtils
 
+  // Load peer submitted annotations 
+  
   // Load submitted annotations from localStorage when in reviewing mode
   useEffect(() => {
     if (stage === "reviewing") {
