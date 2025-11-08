@@ -726,6 +726,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
   margin: 6px 0 8px;
   font-size: 0.9rem;
   color: #7b7e83; /* gray-500 */
@@ -735,13 +736,19 @@
 .sentence-canvas-meta-left {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 65%; /* Take up to 65% of meta container */
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
 }
 
 .sentence-canvas-meta-current {
   color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0; /* Allow text-overflow in flex */
+  flex: 1;
 }
 
 .sentence-canvas-meta-right {
