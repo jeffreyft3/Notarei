@@ -1,0 +1,142 @@
+.articles-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.articles-container h1 {
+  font-size: 2rem;
+  color: var(--primary);
+  margin-bottom: 2rem;
+  font-family: var(--font-headers);
+}
+
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.article-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 125, 96, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.article-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+}
+
+.article-content {
+  padding: 1.5rem;
+}
+
+.article-title {
+  font-size: 1.25rem;
+  color: #2f231f;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+  font-family: var(--font-headers);
+}
+
+.article-excerpt {
+  color: #4b5563;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.article-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.article-date {
+  color: #8a5c4d;
+}
+
+.article-source {
+  padding: 0.25rem 0.75rem;
+  background: rgba(226, 125, 96, 0.1);
+  border-radius: 999px;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.article-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 3rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 125, 96, 0.25);
+}
+
+.loading-state {
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.error-state {
+  color: #ef4444;
+}
+
+.retry-button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+  background-color: #f39a82;
+}
+
+@media (max-width: 640px) {
+  .articles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .articles-container {
+    margin: 1rem auto;
+  }
+
+  .article-card {
+    margin-bottom: 1rem;
+  }
+}

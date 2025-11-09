@@ -1,11 +1,9 @@
-
-import ArticleList from '@/components/articles/ArticleList'
 import Annotate from "@/components/annotate/Annotate"
 import './annotate.css'
 const page = () => {
   return (
     <div className='pageWrapper'>
-      <ArticleList />
+        <Annotate articleText={sampleArticleText} articleSentences={sampleArticleSentences} />
     </div>
   )
 }
