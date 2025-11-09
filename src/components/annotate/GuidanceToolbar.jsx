@@ -52,31 +52,13 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
     >
       <div className="guidance-content">
         <aside className = "guidance-actions">
-        <div className="guidance-summary">
-            <span className="summary-label">Annotations</span>
-            <span className="summary-value">{annotations.length}</span>
-          </div>
           <div className="guidance-stage-indicator" aria-live="polite">
             <span className="stage-indicator-label">Current stage</span>
             <span className="stage-indicator-value">{stageLabel}</span>
           </div>
-          <div className="guidance-stage-toggle" role="tablist" aria-label="Workspace mode">
-            <button
-              type="button"
-              className={`stage-button ${stage === "annotating" ? "active" : ""}`}
-              onClick={() => setStage("annotating")}
-              aria-pressed={stage === "annotating"}
-            >
-              Annotating
-            </button>
-            <button
-              type="button"
-              className={`stage-button ${stage === "reviewing" ? "active" : ""}`}
-              onClick={() => setStage("reviewing")}
-              aria-pressed={stage === "reviewing"}
-            >
-              Reviewing
-            </button>
+          <div className="guidance-summary">
+            <span className="summary-label">Annotations</span>
+            <span className="summary-value">{annotations.length}</span>
           </div>
           </aside>
 
