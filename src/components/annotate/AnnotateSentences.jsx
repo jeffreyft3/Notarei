@@ -27,11 +27,10 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
     ]
 
     const handleClickSentence = useCallback((s, index) => {
-        const resolvedOrder = typeof s?.sentenceOrder === 'number' ? s.sentenceOrder : index
         setActiveIndex(index)
         // Open the annotation window with this sentence prefilled (same flow as Enter)
-        setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset, sentenceOrder: resolvedOrder })
-        setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '', sentenceOrder: resolvedOrder })
+        setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
+        setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
         setShowAnnotationWindow(true)
     }, [])
 
@@ -48,10 +47,9 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
             e.preventDefault()
                 if (activeIndex >= 0) {
                     const s = articleSentences[activeIndex]
-                    const resolvedOrder = typeof s?.sentenceOrder === 'number' ? s.sentenceOrder : activeIndex
                     // Open the annotation window with this sentence prefilled
-                    setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset, sentenceOrder: resolvedOrder })
-                    setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '', sentenceOrder: resolvedOrder })
+                    setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
+                    setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
                     setShowAnnotationWindow(true)
                 }
         }
@@ -100,27 +98,25 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                 const handleSecondarySelect = (secondaryCategory) => {
                     setCurrentAnnotation(prev => ({ ...(prev||{}), secondaryCategory }))
                 }
+                const handleAdditionalBiasesChange = (additionalBiases) => {
+                    setCurrentAnnotation(prev => ({ ...(prev||{}), additionalBiases }))
+                }
                 const handleNoteChange = (note) => {
                     setCurrentAnnotation(prev => ({ ...(prev||{}), note }))
                 }
                 const saveAnnotation = () => {
                     if (!pendingSelection || !currentAnnotation?.primaryCategory) return
-                    const order = typeof pendingSelection?.sentenceOrder === 'number'
-                        ? pendingSelection.sentenceOrder
-                        : (activeIndex >= 0 ? activeIndex : null)
-
                     const newAnn = {
                         id: Date.now(),
                         text: pendingSelection.text,
                         category: currentAnnotation.primaryCategory,
                         primaryCategory: currentAnnotation.primaryCategory,
                         secondaryCategory: currentAnnotation.secondaryCategory || '',
+                        additionalBiases: currentAnnotation.additionalBiases || [],
                         note: currentAnnotation.note || '',
                         startOffset: pendingSelection.startOffset,
                         endOffset: pendingSelection.endOffset,
-                        timestamp: new Date().toISOString(),
-                        sentenceOrder: typeof order === 'number' ? order : null,
-                        sentence_order: typeof order === 'number' ? order : null
+                        timestamp: new Date().toISOString()
                     }
                     onAddAnnotation && onAddAnnotation(newAnn)
                     setShowAnnotationWindow(false)
@@ -249,6 +245,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                             setSelectOpen={setSelectOpen}
                             onPrimaryChange={handlePrimarySelect}
                             onSecondaryChange={handleSecondarySelect}
+                            onAdditionalBiasesChange={handleAdditionalBiasesChange}
                             onNoteChange={handleNoteChange}
                             onSave={saveAnnotation}
                             onCancel={cancelAnnotation}

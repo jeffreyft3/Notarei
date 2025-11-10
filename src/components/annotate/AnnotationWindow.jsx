@@ -6,10 +6,10 @@ import './annotate.css'
 // Reusable annotation window for creating or editing an annotation selection
 // Props contract:
 // - pendingSelection: { text, startOffset, endOffset }
-// - currentAnnotation: { primaryCategory, secondaryCategory, note }
+// - currentAnnotation: { primaryCategory, secondaryCategory, note, additionalBiases }
 // - biasCategories: string[]
 // - selectOpen: boolean, setSelectOpen: fn(boolean)
-// - onPrimaryChange, onSecondaryChange, onNoteChange, onSave, onCancel: handlers
+// - onPrimaryChange, onSecondaryChange, onNoteChange, onAdditionalBiasesChange, onSave, onCancel: handlers
 const AnnotationWindow = ({
   pendingSelection,
   currentAnnotation,
@@ -18,12 +18,21 @@ const AnnotationWindow = ({
   setSelectOpen,
   onPrimaryChange,
   onSecondaryChange,
+  onAdditionalBiasesChange,
   onNoteChange,
   onSave,
   onCancel,
   title = 'Annotate Selection'
 }) => {
   if (!pendingSelection) return null
+
+  const handleAdditionalBiasToggle = (category) => {
+    const current = currentAnnotation?.additionalBiases || []
+    const newBiases = current.includes(category)
+      ? current.filter(b => b !== category)
+      : [...current, category]
+    onAdditionalBiasesChange && onAdditionalBiasesChange(newBiases)
+  }
 
   return (
     <motion.div 
@@ -37,6 +46,8 @@ const AnnotationWindow = ({
         position: 'fixed',
         right: '20px',
         top: '50%',
+        width: '400px',
+        minWidth: '350px',
         backgroundColor: 'white',
         border: '1px solid #ddd',
         borderRadius: '8px',
@@ -89,6 +100,57 @@ const AnnotationWindow = ({
               </option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div className="additional-biases-selection" style={{ marginTop: 12 }}>
+        <label>Additional Biases (select multiple):</label>
+        <div 
+          className="checkbox-group" 
+          style={{ 
+            marginTop: '8px', 
+            maxHeight: '120px', 
+            overflowY: 'auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: '8px 12px',
+            padding: '8px',
+            border: '1px solid #e1e1e1',
+            borderRadius: '6px',
+            backgroundColor: '#fafafa'
+          }}
+        >
+          {biasCategories.map((category, index) => {
+            const isSelected = currentAnnotation?.additionalBiases?.includes(category) || false
+            const isPrimary = currentAnnotation?.primaryCategory === category
+            const isSecondary = currentAnnotation?.secondaryCategory === category
+            const isDisabled = isPrimary || isSecondary
+            
+            return (
+              <div key={index} className="checkbox-item" style={{ 
+                opacity: isDisabled ? 0.5 : 1
+              }}>
+                <input
+                  type="checkbox"
+                  id={`additional-bias-${index}`}
+                  checked={isSelected}
+                  disabled={isDisabled}
+                  onChange={() => handleAdditionalBiasToggle(category)}
+                />
+                <label 
+                  htmlFor={`additional-bias-${index}`}
+                  style={{ 
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  {category}
+                  {isPrimary && <span style={{ color: '#007acc', fontSize: '12px' }}> (Primary)</span>}
+                  {isSecondary && <span style={{ color: '#666', fontSize: '12px' }}> (Secondary)</span>}
+                </label>
+              </div>
+            )
+          })}
         </div>
       </div>
 

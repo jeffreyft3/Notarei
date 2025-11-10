@@ -16,38 +16,49 @@ const ReviewSentences = ({
 	onSelectAnnotation,
 }) => {
 
+		// Bucket annotations by sentence using range containment (startOffset within [start,end))
 		// Bucket annotations by sentence using sentenceOrder when available, else range containment
 		const sentenceStates = useMemo(() => {
-			// Prepare sentence ranges
-			const sentences = (articleSentences || []).map((s, index) => {
-				const start = typeof s.startOffset === 'number' ? s.startOffset : 0
-				const end = start + (s.text?.length || 0)
-				const order = typeof s.sentenceOrder === 'number' ? s.sentenceOrder : index
-				return { ...s, __start: start, __end: end, __order: order }
-			})
-
-			const orderToIndex = new Map()
-			sentences.forEach((s, idx) => {
-				if (typeof s.__order === 'number') orderToIndex.set(s.__order, idx)
-			})
+			// Normalize and sort sentences consistently
+			const sentencesRaw = Array.isArray(articleSentences) ? articleSentences : []
+			const hasOrder = sentencesRaw.every(s => typeof s.sentenceOrder === 'number')
+			const sentences = sentencesRaw
+				.slice()
+				.sort((a, b) => {
+					if (hasOrder) return a.sentenceOrder - b.sentenceOrder
+					const as = typeof a.startOffset === 'number' ? a.startOffset : 0
+					const bs = typeof b.startOffset === 'number' ? b.startOffset : 0
+					return as - bs
+				})
+				.map((s) => {
+					const start = typeof s.startOffset === 'number' ? s.startOffset : 0
+					const end = start + (s.text?.length || 0)
+					return { ...s, __start: start, __end: end }
+				})
 
 			// Initialize buckets
 			const buckets = sentences.map(() => ({ user: [], opp: [] }))
 
 			const assignToBucket = (ann, key) => {
 				if (!ann) return
-				let idx = -1
-				const candidateOrder = typeof ann?.sentenceOrder === 'number'
-					? ann.sentenceOrder
-					: (typeof ann?.sentence_order === 'number' ? ann.sentence_order : null)
-				if (typeof candidateOrder === 'number' && orderToIndex.has(candidateOrder)) {
-					idx = orderToIndex.get(candidateOrder)
+				// Prefer sentenceOrder when valid
+				if (typeof ann.sentenceOrder === 'number') {
+					let idx = ann.sentenceOrder
+					// Adjust if sentenceOrder appears 1-based
+					if (idx >= sentences.length && idx - 1 >= 0 && idx - 1 < sentences.length) {
+						idx = idx - 1
+					}
+					if (idx >= 0 && idx < sentences.length) {
+						buckets[idx][key].push(ann)
+						return
+					}
 				}
-				if (idx === -1 && typeof ann?.startOffset === 'number') {
-					idx = sentences.findIndex(s => ann.startOffset >= s.__start && ann.startOffset < s.__end)
-				}
-				if (idx !== -1) {
-					buckets[idx][key].push(ann)
+				// Fallback to range containment
+				if (typeof ann.startOffset === 'number') {
+					const idx = sentences.findIndex(s => ann.startOffset >= s.__start && ann.startOffset < s.__end)
+					if (idx !== -1) {
+						buckets[idx][key].push(ann)
+					}
 				}
 			}
 
@@ -59,33 +70,24 @@ const ReviewSentences = ({
 				const bucket = buckets[idx]
 				const userCats = new Set(bucket.user.map(a => a.primaryCategory || a.category))
 				const oppCats = new Set(bucket.opp.map(a => a.primaryCategory || a.category))
-				
-				// Handle different matching scenarios
+
 				let matched = false
 				let score = 0
-				
 				const hasUser = bucket.user.length > 0
 				const hasOpp = bucket.opp.length > 0
-				
+
 				if (!hasUser && !hasOpp) {
-					// Both have no annotations - this is considered a match
 					matched = true
 					score = 1
 				} else if (hasUser && hasOpp) {
-					// Both have annotations - check if categories match
 					for (const c of userCats) {
-						if (oppCats.has(c)) { 
-							matched = true
-							score = 1
-							break 
-						}
+						if (oppCats.has(c)) { matched = true; score = 1; break }
 					}
 				} else {
-					// One has annotation, one doesn't - this is a mismatch that needs resolution
 					matched = false
 					score = 0
 				}
-				
+
 				return {
 					sentence: s,
 					user: bucket.user,
@@ -100,7 +102,7 @@ const ReviewSentences = ({
 
 	const handleSentenceClick = useCallback((state) => {
 		// Create a synthetic annotation object that represents the sentence context
-		const { sentence, user, opp } = state
+		const { sentence, user, opp, hasUser, hasOpp } = state
 		
 		// If we have user or opponent annotations, prioritize them
 		let selectedAnnotation = user[0] || opp[0]
@@ -115,9 +117,7 @@ const ReviewSentences = ({
 				category: 'No category',
 				primaryCategory: 'No category',
 				note: '',
-				synthetic: true, // Mark as synthetic for UI handling
-				sentenceOrder: typeof sentence?.__order === 'number' ? sentence.__order : null,
-				sentence_order: typeof sentence?.__order === 'number' ? sentence.__order : null
+				synthetic: true // Mark as synthetic for UI handling
 			}
 		}
 		
@@ -163,7 +163,7 @@ const ReviewSentences = ({
 							</div>
 							<div className="sentence-review-tags">
 								{hasUser && <span className="review-tag user-tag">You: {user.map(a => a.primaryCategory || a.category).join(', ')}</span>}
-								{hasOpp && <span className="review-tag opp-tag">Opponent: {opp.map(a => a.primaryCategory || a.category).join(', ')}</span>}
+								{hasOpp && <span className="review-tag opp-tag">Co-annotator: {opp.map(a => a.primaryCategory || a.category).join(', ')}</span>}
 								{!hasUser && !hasOpp && <span className="review-tag empty-tag">No annotations</span>}
 								{passed ? <span className="review-tag pass-tag">✓ Match</span> : <span className="review-tag fail-tag">✕ Needs Match</span>}
 							</div>

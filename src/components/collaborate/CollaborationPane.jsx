@@ -82,10 +82,6 @@ const CollaborationPane = ({
       return
     }
     
-    const sentenceOrder = typeof selectedAnnotation?.sentenceOrder === 'number'
-      ? selectedAnnotation.sentenceOrder
-      : (typeof selectedAnnotation?.sentence_order === 'number' ? selectedAnnotation.sentence_order : null)
-
     if (hasUserAnnotation) {
       // Replace user's annotation with opponent's
       const updatedAnnotation = {
@@ -96,9 +92,7 @@ const CollaborationPane = ({
         note: selectedAnnotation.opponentNote || selectedAnnotation.note,
         revised: true,
         acceptedFrom: 'opponent',
-        revisedAt: new Date().toISOString(),
-        sentenceOrder: sentenceOrder,
-        sentence_order: sentenceOrder
+        revisedAt: new Date().toISOString()
       }
       onEditAnnotation(updatedAnnotation)
     } else {
@@ -114,9 +108,7 @@ const CollaborationPane = ({
         note: selectedAnnotation.opponentNote || '',
         revised: true,
         acceptedFrom: 'opponent',
-        revisedAt: new Date().toISOString(),
-        sentenceOrder: sentenceOrder,
-        sentence_order: sentenceOrder
+        revisedAt: new Date().toISOString()
       }
       onEditAnnotation(newAnnotation)
     }
@@ -186,13 +178,13 @@ const CollaborationPane = ({
           </div>
           <div className="comparison-grid">
             <div className="comparison-item">
-              <div className="comparison-label">Your Choice</div>
+              <div className="comparison-label">You</div>
               <div className="comparison-category your-category">
                 {selectedAnnotation.category || selectedAnnotation.primaryCategory || 'No category'}
               </div>
             </div>
             <div className="comparison-item">
-              <div className="comparison-label">Opponent's Choice</div>
+              <div className="comparison-label">Them</div>
               <div className="comparison-category opponent-category">
                 {selectedAnnotation.opponentCategory || selectedAnnotation.opponentPrimaryCategory || 'No category'}
               </div>
@@ -200,7 +192,7 @@ const CollaborationPane = ({
           </div>
           {selectedAnnotation.opponentNote && (
             <div className="opponent-notes">
-              <div className="comparison-label">Opponent's Notes</div>
+              <div className="comparison-label">Their Notes</div>
               <p className="opponent-note-text">{selectedAnnotation.opponentNote}</p>
             </div>
           )}
@@ -222,7 +214,7 @@ const CollaborationPane = ({
         ) : selectedAnnotation.note ? (
           <p>{selectedAnnotation.note}</p>
         ) : (
-          <p className="note-placeholder">This annotator did not leave a note for this highlight.</p>
+          <p className="note-placeholder">You did not leave a note for this highlight.</p>
         )}
       </motion.section>
 

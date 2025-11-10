@@ -147,7 +147,6 @@ const Annotate = ({    articleText, articleSentences}) => {
                     onAddAnnotation={handleAddAnnotation}
                     onRemoveAnnotation={handleRemoveAnnotation}
                     hoveredAnnotationId={hoveredAnnotationId}
-                    articleSentences={articleSentences}
                 />
             )}
         </div>

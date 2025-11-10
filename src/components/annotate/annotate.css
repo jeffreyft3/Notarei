@@ -385,8 +385,8 @@
     padding: 4px 8px;
     border-radius: 5px;
     background: #f7f7f7;
-    border: 1.5px solid #e5e5e5; /* color overridden inline via style borderColor */
-    color: #555;
+    border: 2.5px solid;
+    font-weight: 800;
     font-size: 0.85em;
     line-height: 1.2;
     white-space: nowrap;
@@ -863,4 +863,53 @@
 
 .review-neutral:hover {
 	background: #f1f5f9;
+}
+
+/* Custom checkbox styles */
+.checkbox-group input[type="checkbox"] {
+	appearance: none;
+	background-color: #fff;
+	margin: 0;
+	font: inherit;
+	color: currentColor;
+	width: 1.15em;
+	height: 1.15em;
+	border: 0.15em solid currentColor;
+	border-radius: 0.15em;
+	display: grid;
+	place-content: center;
+	--form-control-color: #217bef;
+}
+
+.checkbox-group .checkbox-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 1.5em;
+}
+
+.checkbox-group .checkbox-item label {
+	display: flex;
+	align-items: center;
+	line-height: 1.2;
+	margin: 0;
+}
+
+.checkbox-group input[type="checkbox"]::before {
+	content: "";
+	width: 0.65em;
+	height: 0.65em;
+	transform: scale(0);
+	transition: 120ms transform ease-in-out;
+	box-shadow: inset 1em 1em var(--form-control-color);
+	border-radius: 0.1em;
+}
+
+.checkbox-group input[type="checkbox"]:checked::before {
+	transform: scale(1);
+}
+
+.checkbox-group input[type="checkbox"]:focus {
+	outline: max(2px, 0.15em) solid var(--form-control-color);
+	outline-offset: max(2px, 0.15em);
 }

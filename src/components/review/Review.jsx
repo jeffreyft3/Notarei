@@ -27,10 +27,7 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
             secondaryCategory: a.secondaryCategory || '',
             note: a.note || '',
             timestamp: a.timestamp || null,
-                        sentenceOrder: typeof a.sentenceOrder === 'number' ? a.sentenceOrder
-                            : (typeof a.sentence_order === 'number' ? a.sentence_order : null),
-                        sentence_order: typeof a.sentenceOrder === 'number' ? a.sentenceOrder
-                            : (typeof a.sentence_order === 'number' ? a.sentence_order : null),
+            sentenceOrder: typeof a.sentenceOrder === 'number' ? a.sentenceOrder : (typeof a.sentence_order === 'number' ? a.sentence_order : undefined),
         }))
     }, [opponentAnnotations])
 
@@ -49,13 +46,22 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
             }
         }
         
-        // Find matching opponent annotation by text overlap or proximity
-        const matchingOpponent = oppAnnotations.find(opp => (
-            typeof opp.sentenceOrder === 'number' && typeof selectedReviewAnnotation.sentenceOrder === 'number' && opp.sentenceOrder === selectedReviewAnnotation.sentenceOrder
-        )) || oppAnnotations.find(opp => 
-            opp.startOffset <= selectedReviewAnnotation.startOffset && 
-            selectedReviewAnnotation.startOffset < opp.startOffset + (opp.text?.length || 0)
-        ) || oppAnnotations.find(opp => opp.startOffset === selectedReviewAnnotation.startOffset)
+        // Prefer matching by sentenceOrder when available, else by text overlap/proximity
+        let matchingOpponent = null
+        if (typeof selectedReviewAnnotation.sentenceOrder === 'number') {
+            matchingOpponent = oppAnnotations.find(opp => typeof opp.sentenceOrder === 'number' && opp.sentenceOrder === selectedReviewAnnotation.sentenceOrder)
+            // Adjust for potential 1-based vs 0-based mismatch
+            if (!matchingOpponent) {
+                matchingOpponent = oppAnnotations.find(opp => typeof opp.sentenceOrder === 'number' && opp.sentenceOrder === selectedReviewAnnotation.sentenceOrder - 1)
+                    || oppAnnotations.find(opp => typeof opp.sentenceOrder === 'number' && opp.sentenceOrder === selectedReviewAnnotation.sentenceOrder + 1)
+            }
+        }
+        if (!matchingOpponent) {
+            matchingOpponent = oppAnnotations.find(opp => 
+                opp.startOffset <= selectedReviewAnnotation.startOffset && 
+                selectedReviewAnnotation.startOffset < opp.startOffset + (opp.text?.length || 0)
+            ) || oppAnnotations.find(opp => opp.startOffset === selectedReviewAnnotation.startOffset)
+        }
 
         return {
             ...selectedReviewAnnotation,
@@ -76,16 +82,13 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
         articleSentences.forEach((sentence, idx) => {
             const sentenceStart = sentence.startOffset || 0
             const sentenceEnd = sentenceStart + (sentence.text?.length || 0)
-            const sentenceOrder = typeof sentence?.sentenceOrder === 'number' ? sentence.sentenceOrder : idx
             
             // Find annotations for this sentence
             const userAnns = editedAnnotations.filter(ann => 
-                (typeof ann?.sentenceOrder === 'number' ? ann.sentenceOrder === sentenceOrder
-                    : ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd)
+                ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd
             )
             const oppAnns = oppAnnotations.filter(ann => 
-                (typeof ann?.sentenceOrder === 'number' ? ann.sentenceOrder === sentenceOrder
-                    : ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd)
+                ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd
             )
             
             const hasUser = userAnns.length > 0
