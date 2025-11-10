@@ -30,7 +30,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
         setActiveIndex(index)
         // Open the annotation window with this sentence prefilled (same flow as Enter)
         setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
-        setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '' })
+        setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
         setShowAnnotationWindow(true)
     }, [])
 
@@ -49,7 +49,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                     const s = articleSentences[activeIndex]
                     // Open the annotation window with this sentence prefilled
                     setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
-                    setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '' })
+                    setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
                     setShowAnnotationWindow(true)
                 }
         }
@@ -98,6 +98,9 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                 const handleSecondarySelect = (secondaryCategory) => {
                     setCurrentAnnotation(prev => ({ ...(prev||{}), secondaryCategory }))
                 }
+                const handleAdditionalBiasesChange = (additionalBiases) => {
+                    setCurrentAnnotation(prev => ({ ...(prev||{}), additionalBiases }))
+                }
                 const handleNoteChange = (note) => {
                     setCurrentAnnotation(prev => ({ ...(prev||{}), note }))
                 }
@@ -109,6 +112,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                         category: currentAnnotation.primaryCategory,
                         primaryCategory: currentAnnotation.primaryCategory,
                         secondaryCategory: currentAnnotation.secondaryCategory || '',
+                        additionalBiases: currentAnnotation.additionalBiases || [],
                         note: currentAnnotation.note || '',
                         startOffset: pendingSelection.startOffset,
                         endOffset: pendingSelection.endOffset,
@@ -241,6 +245,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                             setSelectOpen={setSelectOpen}
                             onPrimaryChange={handlePrimarySelect}
                             onSecondaryChange={handleSecondarySelect}
+                            onAdditionalBiasesChange={handleAdditionalBiasesChange}
                             onNoteChange={handleNoteChange}
                             onSave={saveAnnotation}
                             onCancel={cancelAnnotation}

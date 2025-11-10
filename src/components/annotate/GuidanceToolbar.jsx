@@ -89,7 +89,6 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
           {
             stage === "reviewing" && (
               <div>
-                <h3>Review Submitted Annotations</h3>
                 {!submittedData || !submittedData.annotations || submittedData.annotations.length === 0 ? (
                   <div className="guidance-tip">
                     <p>No submitted annotations found. Submit annotations in the Annotating mode first.</p>
@@ -97,10 +96,7 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                 ) : (
                   <div>
                     <div className="guidance-summary" style={{ marginBottom: '15px' }}>
-                      <span className="summary-label">Submitted</span>
-                      <span className="summary-value">
-                        {new Date(submittedData.submittedAt).toLocaleDateString()}
-                      </span>
+                      {/* Something about the matching %, only 90% match, under the threshold. */}
                     </div>
                     <div style={{ 
                       maxHeight: '400px', 

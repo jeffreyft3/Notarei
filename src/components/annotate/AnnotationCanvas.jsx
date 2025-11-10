@@ -85,6 +85,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
             text: selectedText,
             primaryCategory: '',
             secondaryCategory: '',
+            additionalBiases: [],
             note: ''
           })
           
@@ -108,7 +109,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   }
 
   // Add annotation
-  const addAnnotation = (primaryCategory, secondaryCategory = '', note = '') => {
+  const addAnnotation = (primaryCategory, secondaryCategory = '', additionalBiases = [], note = '') => {
     if (pendingSelection && currentAnnotation) {
       const newAnnotation = {
         id: Date.now(),
@@ -117,6 +118,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
         category: primaryCategory,
         primaryCategory,
         secondaryCategory,
+        additionalBiases,
         note,
         startOffset: pendingSelection.startOffset,
         endOffset: pendingSelection.endOffset,
@@ -151,6 +153,12 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
     }
   }
 
+  const handleAdditionalBiasesChange = (additionalBiases) => {
+    if (currentAnnotation) {
+      setCurrentAnnotation(prev => ({ ...prev, additionalBiases }))
+    }
+  }
+
   // Handle annotation note change
   const handleNoteChange = (note) => {
     if (currentAnnotation) {
@@ -161,7 +169,12 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   // Save current annotation
   const saveAnnotation = () => {
     if (currentAnnotation && currentAnnotation.primaryCategory) {
-      addAnnotation(currentAnnotation.primaryCategory, currentAnnotation.secondaryCategory, currentAnnotation.note)
+      addAnnotation(
+        currentAnnotation.primaryCategory, 
+        currentAnnotation.secondaryCategory, 
+        currentAnnotation.additionalBiases || [],
+        currentAnnotation.note
+      )
     }
   }
 
@@ -407,6 +420,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
             setSelectOpen={setSelectOpen}
             onPrimaryChange={handlePrimarySelect}
             onSecondaryChange={handleSecondarySelect}
+            onAdditionalBiasesChange={handleAdditionalBiasesChange}
             onNoteChange={handleNoteChange}
             onSave={saveAnnotation}
             onCancel={cancelAnnotation}

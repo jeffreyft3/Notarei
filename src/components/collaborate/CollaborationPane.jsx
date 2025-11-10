@@ -4,12 +4,20 @@ import { motion } from "framer-motion"
 import "./collaborate.css"
 
 // Threaded collaboration panel; opens the thread for the currently selected annotation (if any).
-// selectedAnnotation: { id, text, category, note, startOffset, endOffset }
-const CollaborationPane = ({ selectedAnnotation }) => {
+// selectedAnnotation: { id, text, category, note, startOffset, endOffset, opponentCategory, opponentNote }
+const CollaborationPane = ({ 
+  selectedAnnotation, 
+  onEditAnnotation, 
+  onSubmitRevisedAnnotations,
+  revisedAnnotations = [],
+  totalAnnotationsCount = 0,
+  thresholdMet = false 
+}) => {
   // Keep in-memory threads keyed by annotation id. For dev simplicity, we don't persist threads.
   const [threadsByAnnId, setThreadsByAnnId] = useState({})
   const [activeAnnId, setActiveAnnId] = useState(null)
   const [draft, setDraft] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Derive the currently active thread comments
   const comments = useMemo(() => {
@@ -24,17 +32,8 @@ const CollaborationPane = ({ selectedAnnotation }) => {
     if (!annId) return
     setThreadsByAnnId(prev => {
       if (prev[annId]) return prev
-      // Seed a starter message referencing the original note if available
-      const seed = selectedAnnotation?.note
-        ? [{
-            id: `seed-${annId}`,
-            author: "Annotator",
-            role: "annotator",
-            text: selectedAnnotation.note,
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-          }]
-        : []
-      return { ...prev, [annId]: seed }
+      // Initialize empty thread (no automatic seeding with original note)
+      return { ...prev, [annId]: [] }
     })
   }, [selectedAnnotation])
 
@@ -63,6 +62,72 @@ const CollaborationPane = ({ selectedAnnotation }) => {
     console.debug("Escalating thread to moderator")
   }
 
+  const handleAgreeAndAccept = () => {
+    if (!selectedAnnotation || !onEditAnnotation) return
+    
+    console.debug("Agreeing and accepting changes for annotation:", activeAnnId)
+    
+    // Handle synthetic annotations (neither user nor opponent had annotations)
+    if (selectedAnnotation.synthetic) {
+      console.debug("Cannot accept changes for synthetic annotation - no opponent annotation exists")
+      return
+    }
+    
+    // Check if user has an annotation for this position
+    const hasUserAnnotation = selectedAnnotation.category && selectedAnnotation.category !== 'No category'
+    const hasOpponentAnnotation = selectedAnnotation.opponentPrimaryCategory && selectedAnnotation.opponentPrimaryCategory !== 'No category'
+    
+    if (!hasOpponentAnnotation) {
+      console.debug("No opponent annotation to accept")
+      return
+    }
+    
+    if (hasUserAnnotation) {
+      // Replace user's annotation with opponent's
+      const updatedAnnotation = {
+        ...selectedAnnotation,
+        category: selectedAnnotation.opponentPrimaryCategory || selectedAnnotation.opponentCategory,
+        primaryCategory: selectedAnnotation.opponentPrimaryCategory || selectedAnnotation.opponentCategory,
+        secondaryCategory: selectedAnnotation.opponentSecondaryCategory || '',
+        note: selectedAnnotation.opponentNote || selectedAnnotation.note,
+        revised: true,
+        acceptedFrom: 'opponent',
+        revisedAt: new Date().toISOString()
+      }
+      onEditAnnotation(updatedAnnotation)
+    } else {
+      // Add opponent's annotation since user had none
+      const newAnnotation = {
+        id: `accepted-${Date.now()}`,
+        text: selectedAnnotation.text,
+        startOffset: selectedAnnotation.startOffset,
+        endOffset: selectedAnnotation.endOffset,
+        category: selectedAnnotation.opponentPrimaryCategory || selectedAnnotation.opponentCategory,
+        primaryCategory: selectedAnnotation.opponentPrimaryCategory || selectedAnnotation.opponentCategory,
+        secondaryCategory: selectedAnnotation.opponentSecondaryCategory || '',
+        note: selectedAnnotation.opponentNote || '',
+        revised: true,
+        acceptedFrom: 'opponent',
+        revisedAt: new Date().toISOString()
+      }
+      onEditAnnotation(newAnnotation)
+    }
+  }
+
+  const handleSubmitToBackend = async () => {
+    if (!onSubmitRevisedAnnotations || !thresholdMet) return
+    
+    setIsSubmitting(true)
+    try {
+      await onSubmitRevisedAnnotations(revisedAnnotations)
+      console.log("Successfully submitted revised annotations to backend")
+    } catch (error) {
+      console.error("Failed to submit revised annotations:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <motion.section
       className="collaboration-pane"
@@ -79,16 +144,60 @@ const CollaborationPane = ({ selectedAnnotation }) => {
         <div>
             <span>
           <h2 style={{ margin: 0 }}>Thread</h2>
-
+          {thresholdMet && (
+            <span className="threshold-indicator">✓ Ready to Submit</span>
+          )}
             </span>
           {selectedAnnotation && (
             <div style={{ fontSize: '0.85rem', color: '#555' }}>
               <strong>{selectedAnnotation.category}</strong> • {selectedAnnotation.startOffset}-{selectedAnnotation.endOffset}
+              {selectedAnnotation.revised && (
+                <span className="revised-indicator"> • Revised</span>
+              )}
             </div>
           )}
         </div>
-        <span className="collaboration-count">{comments.length} repl{comments.length === 1 ? 'y' : 'ies'}</span>
+        <span className="collaboration-count">
+          {comments.length} repl{comments.length === 1 ? 'y' : 'ies'}
+          {revisedAnnotations.length > 0 && (
+            <span className="revised-count"> • {revisedAnnotations.length} revised</span>
+          )}
+        </span>
       </motion.header>
+
+      {/* Category Comparison Section */}
+      {selectedAnnotation && (
+        <motion.section
+          className="category-comparison"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
+        >
+          <div className="comparison-header">
+            <h3>Annotation Comparison</h3>
+          </div>
+          <div className="comparison-grid">
+            <div className="comparison-item">
+              <div className="comparison-label">You</div>
+              <div className="comparison-category your-category">
+                {selectedAnnotation.category || selectedAnnotation.primaryCategory || 'No category'}
+              </div>
+            </div>
+            <div className="comparison-item">
+              <div className="comparison-label">Them</div>
+              <div className="comparison-category opponent-category">
+                {selectedAnnotation.opponentCategory || selectedAnnotation.opponentPrimaryCategory || 'No category'}
+              </div>
+            </div>
+          </div>
+          {selectedAnnotation.opponentNote && (
+            <div className="opponent-notes">
+              <div className="comparison-label">Their Notes</div>
+              <p className="opponent-note-text">{selectedAnnotation.opponentNote}</p>
+            </div>
+          )}
+        </motion.section>
+      )}
 
       <motion.section
         className="original-note"
@@ -97,7 +206,7 @@ const CollaborationPane = ({ selectedAnnotation }) => {
         transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
       >
         <div className="note-meta">
-          <strong>Original note</strong>
+          <strong>Your Notes</strong>
           <span className="note-meta-author">Annotator</span>
         </div>
         {!selectedAnnotation ? (
@@ -105,7 +214,7 @@ const CollaborationPane = ({ selectedAnnotation }) => {
         ) : selectedAnnotation.note ? (
           <p>{selectedAnnotation.note}</p>
         ) : (
-          <p className="note-placeholder">This annotator did not leave a note for this highlight.</p>
+          <p className="note-placeholder">You did not leave a note for this highlight.</p>
         )}
       </motion.section>
 
@@ -183,6 +292,64 @@ const CollaborationPane = ({ selectedAnnotation }) => {
           </motion.button>
         </div>
       </motion.form>
+
+      {/* Agree and Accept Section */}
+      {selectedAnnotation && (
+        <motion.div
+          className="accept-section"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut", delay: 0.15 }}
+        >
+          <motion.button
+            type="button"
+            className="accept-button"
+            onClick={handleAgreeAndAccept}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={
+              !activeAnnId || 
+              selectedAnnotation?.synthetic || 
+              !selectedAnnotation?.opponentPrimaryCategory || 
+              selectedAnnotation?.opponentPrimaryCategory === 'No category'
+            }
+          >
+            {selectedAnnotation?.synthetic 
+              ? 'No Changes to Accept'
+              : selectedAnnotation?.category && selectedAnnotation?.category !== 'No category' 
+                ? 'Accept Opponent\'s Changes' 
+                : 'Add Opponent\'s Annotation'
+            }
+          </motion.button>
+        </motion.div>
+      )}
+
+      {/* Submit to Backend Section */}
+      {thresholdMet && (
+        <motion.div
+          className="submit-section"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut", delay: 0.2 }}
+        >
+          <div className="submission-status">
+            <div className="status-text">
+              <span className="status-icon">✓</span>
+              Threshold met! {revisedAnnotations.length} annotations revised.
+            </div>
+          </div>
+          <motion.button
+            type="button"
+            className="submit-backend-button"
+            onClick={handleSubmitToBackend}
+            whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+            whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+            disabled={isSubmitting || revisedAnnotations.length === 0}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit to Backend'}
+          </motion.button>
+        </motion.div>
+      )}
     </motion.section>
   )
 }

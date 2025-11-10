@@ -3,12 +3,19 @@
 // Base color mapping for categories
 export const categoryColors = {
   'Loaded Language': '#ffeb3b', // yellow
+  'Loaded Language Text': '#111111',
   'Framing': '#1180ffff',         // blue
+  'Framing Text': '#ffffff',
   'Source Imbalance': '#f44336',// red
+  'Source Imbalance Text': '#111111',
   'Speculation': '#e91e63',     // pink/red
+  'Speculation Text': '#111111',
   'Unverified': '#9c27b0',      // purple
+  'Unverified Text': '#ffffff',
   'Omission': '#a069ffff',        // deep purple
-  'Neutral': '#4ad54fff'          // green
+  'Omission Text': '#ffffff',
+  'Neutral': '#4ad54fff',          // green
+  'Neutral Text': '#111111',
 }
 
 export function hexToRgb(hex) {
@@ -62,4 +69,41 @@ export function getAnnotationHexColor(ann) {
   const secHex = categoryColors[secKey] || ''
   // Blend secondary over primary if present
   return mixHexColors(primHex, secHex, 0.35)
+}
+
+// Parse common rgb(a) string into object; returns null if not parseable
+function parseRgbFunc(str) {
+  const match = String(str).match(/rgba?\(([^)]+)\)/i)
+  if (!match) return null
+  const parts = match[1].split(',').map((p) => parseFloat(p.trim()))
+  const [r, g, b] = parts
+  if ([r, g, b].some((v) => Number.isNaN(v))) return null
+  return { r: Math.max(0, Math.min(255, Math.round(r))), g: Math.max(0, Math.min(255, Math.round(g))), b: Math.max(0, Math.min(255, Math.round(b))) }
+}
+
+// Compute relative luminance (WCAG)
+function relativeLuminance({ r, g, b }) {
+  const toLinear = (c) => {
+    const cs = c / 255
+    return cs <= 0.03928 ? cs / 12.92 : Math.pow((cs + 0.055) / 1.055, 2.4)
+  }
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
+}
+
+// Return a readable text color (light or dark) against a background color
+export function getReadableTextColor(bgColor, light = '#ffffff', dark = '#222') {
+  if (!bgColor) return dark
+  let rgb = null
+  const s = String(bgColor).trim().toLowerCase()
+  if (s.startsWith('#')) {
+    rgb = hexToRgb(s)
+  } else if (s.startsWith('rgb')) {
+    rgb = parseRgbFunc(s)
+  } else if (categoryColors[s]) {
+    // If a category key was passed, resolve its color first
+    rgb = hexToRgb(categoryColors[s])
+  }
+  if (!rgb) return dark
+  const L = relativeLuminance(rgb)
+  return L < 0.5 ? light : dark
 }

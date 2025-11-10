@@ -101,8 +101,7 @@ const Annotate = ({    articleText, articleSentences}) => {
     <div className="canvas">
         <div className="guidancePaneWrapper">
             <GuidanceToolbar 
-                stage={stage}
-                setStage={setStage}
+                stage={"annotating"}
                 annotations={annotations}
                 onHoverAnnotation={setHoveredAnnotationId}
                 onSelectAnnotation={setSelectedReviewAnnotation}
@@ -136,14 +135,14 @@ const Annotate = ({    articleText, articleSentences}) => {
             </div>
             {canvasMode === 'sentences' ? (
                 <AnnotateSentences
-                    articleSentences={sampleArticleTextList}
+                    articleSentences={articleSentences}
                     annotations={annotations}
                     onAddAnnotation={handleAddAnnotation}
                     scrollBuffer={3}
                 />
             ) : (
                 <AnnotationCanvas 
-                    articleText={sampleArticleText} 
+                    articleText={articleText} 
                     annotations={annotations}
                     onAddAnnotation={handleAddAnnotation}
                     onRemoveAnnotation={handleRemoveAnnotation}
@@ -152,20 +151,15 @@ const Annotate = ({    articleText, articleSentences}) => {
             )}
         </div>
         <div className="rightPaneWrapper">
-            {
-                stage === 'annotating' && (
                     <AnnotationList 
                         annotations={annotations}
                         newlyCreatedAnnotationId={newlyCreatedAnnotationId}
                         onRemoveAnnotation={handleRemoveAnnotation}
                         onUpdateAnnotation={handleUpdateAnnotation}
                         onHoverAnnotation={setHoveredAnnotationId}
+                        articleText={articleText}
+                        articleSentences={articleSentences}
                     />
-                )
-            }
-            {stage === 'reviewing' && (
-                <CollaborationPane selectedAnnotation={selectedReviewAnnotation} />
-            )}
         </div>
         {showDevClear && (
             <button

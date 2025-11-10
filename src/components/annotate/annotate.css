@@ -385,8 +385,8 @@
     padding: 4px 8px;
     border-radius: 5px;
     background: #f7f7f7;
-    border: 1.5px solid #e5e5e5; /* color overridden inline via style borderColor */
-    color: #555;
+    border: 2.5px solid;
+    font-weight: 800;
     font-size: 0.85em;
     line-height: 1.2;
     white-space: nowrap;
@@ -417,7 +417,8 @@
 
  .annotation-window textarea {
       width: 100%;
-      padding: 20px;
+      padding: 10px 20px;
+      line-height: 2;;
       margin: 10px 0;
       border: none;
       background: #ededed;
@@ -808,4 +809,114 @@
   padding: 24px;
   text-align: center;
   color: #666;
+}
+
+/* Review sentence helpers */
+.review-mismatch-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(239, 68, 68, 0.16); /* red-500 alpha */
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.sentence-review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.review-tag {
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  background: #f9fafb; /* gray-50 */
+}
+
+.user-tag { border-color: #93c5fd; background: #eff6ff; }
+.opp-tag { border-color: #fca5a5; background: #fef2f2; }
+.pass-tag { border-color: #86efac; background: #f0fdf4; }
+.fail-tag { border-color: #fca5a5; background: #fef2f2; }
+.empty-tag { border-color: #e5e7eb; background: #f9fafb; }
+
+/* Review Progress Styles */
+.review-progress {
+	margin-top: 8px;
+}
+
+.progress-indicator {
+	font-size: 0.9rem;
+	padding: 6px 12px;
+	border-radius: 8px;
+	font-weight: 600;
+	background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.15));
+	color: #2563eb;
+	border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.progress-indicator.threshold-met {
+	background: linear-gradient(135deg, rgba(22, 163, 74, 0.1), rgba(21, 128, 61, 0.15));
+	color: #16a34a;
+	border-color: rgba(22, 163, 74, 0.3);
+}
+
+/* Review sentence states */
+.review-neutral {
+	background: #f8fafc;
+	border-left: 3px solid #64748b;
+}
+
+.review-neutral:hover {
+	background: #f1f5f9;
+}
+
+/* Custom checkbox styles */
+.checkbox-group input[type="checkbox"] {
+	appearance: none;
+	background-color: #fff;
+	margin: 0;
+	font: inherit;
+	color: currentColor;
+	width: 1.15em;
+	height: 1.15em;
+	border: 0.15em solid currentColor;
+	border-radius: 0.15em;
+	display: grid;
+	place-content: center;
+	--form-control-color: #217bef;
+}
+
+.checkbox-group .checkbox-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 1.5em;
+}
+
+.checkbox-group .checkbox-item label {
+	display: flex;
+	align-items: center;
+	line-height: 1.2;
+	margin: 0;
+}
+
+.checkbox-group input[type="checkbox"]::before {
+	content: "";
+	width: 0.65em;
+	height: 0.65em;
+	transform: scale(0);
+	transition: 120ms transform ease-in-out;
+	box-shadow: inset 1em 1em var(--form-control-color);
+	border-radius: 0.1em;
+}
+
+.checkbox-group input[type="checkbox"]:checked::before {
+	transform: scale(1);
+}
+
+.checkbox-group input[type="checkbox"]:focus {
+	outline: max(2px, 0.15em) solid var(--form-control-color);
+	outline-offset: max(2px, 0.15em);
 }

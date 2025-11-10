@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './annotate.css'
-import { categoryColors, getAnnotationHexColor } from './colorUtils'
+import { categoryColors, getAnnotationHexColor, getReadableTextColor } from './colorUtils'
 
-const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, onHoverAnnotation }) => {
+const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, onHoverAnnotation, articleText, articleSentences }) => {
   const [editingAnnotation, setEditingAnnotation] = useState(null)
   const [editCategory, setEditCategory] = useState('')
   const [editSecondaryCategory, setEditSecondaryCategory] = useState('')
@@ -24,20 +24,52 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
   // Color mapping moved to colorUtils
 
   const handleSubmit = () => {
-    if (annotations && annotations.length > 0) {
-      // Save annotations to localStorage with timestamp
-      const submissionData = {
-        annotations: annotations,
-        submittedAt: new Date().toISOString(),
-        totalCount: annotations.length
-      }
-      localStorage.setItem('submittedAnnotations', JSON.stringify(submissionData))
-      
-      // Show success message
-      alert(`Successfully submitted ${annotations.length} annotation${annotations.length > 1 ? 's' : ''}! You can now view them in the Review section.`)
-    } else {
+    if (!annotations || annotations.length === 0) {
       alert('No annotations to submit!')
+      return
     }
+
+    // Precompute sentence ranges for mapping
+    const sentences = (articleSentences || []).map((s, i) => {
+      const start = typeof s.startOffset === 'number' ? s.startOffset : 0
+      const end = start + (s.text?.length || 0)
+      // Support existing sentenceOrder or fallback to index
+      const order = typeof s.sentenceOrder === 'number' ? s.sentenceOrder : i
+      return { __start: start, __end: end, order }
+    })
+
+    const findSentenceOrder = (ann) => {
+      if (!ann || typeof ann.startOffset !== 'number') return null
+      // First try containment
+      const idx = sentences.findIndex(s => ann.startOffset >= s.__start && ann.startOffset < s.__end)
+      if (idx !== -1) return sentences[idx].order
+      // Fallback: nearest earlier sentence
+      let nearest = null
+      for (const s of sentences) {
+        if (ann.startOffset >= s.__start) {
+          if (nearest === null || s.__start > sentences[nearest].__start) {
+            nearest = sentences.indexOf(s)
+          }
+        }
+      }
+      return nearest !== null ? sentences[nearest].order : null
+    }
+
+    const enrichedAnnotations = annotations.map(a => ({
+      ...a,
+      sentenceOrder: typeof a.sentenceOrder === 'number' ? a.sentenceOrder : findSentenceOrder(a)
+    }))
+
+    const submissionData = {
+      annotations: enrichedAnnotations,
+      articleText: articleText,
+      articleSentences: articleSentences,
+      submittedAt: new Date().toISOString(),
+      totalCount: enrichedAnnotations.length
+    }
+
+    localStorage.setItem('submittedAnnotations', JSON.stringify(submissionData))
+    alert(`Successfully submitted ${enrichedAnnotations.length} annotation${enrichedAnnotations.length > 1 ? 's' : ''}! You can now view them in the Review section.`)
   }
 
   const handleEditClick = (annotation) => {
@@ -131,7 +163,11 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
                 <div className="annotation-item-labels">
                   <strong 
                     className='annotation-item-label' 
-                    style={{ background: getAnnotationHexColor(annotation), color: '#222', marginTop: 0 }}
+                    style={{ 
+                      background: getAnnotationHexColor(annotation), 
+                      color: getReadableTextColor(getAnnotationHexColor(annotation)), 
+                      marginTop: 0 
+                    }}
                   >
                     {annotation.primaryCategory || annotation.category}
                   </strong>
@@ -139,7 +175,7 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
                     <span
                       className='annotation-item-secondary-label'
                       title='Secondary bias'
-                      style={{ borderColor: categoryColors[annotation.secondaryCategory] || '#e5e5e5' }}
+                      style={{ borderColor: categoryColors[annotation.secondaryCategory] || '#e5e5e5', color: categoryColors[annotation.secondaryCategory] || '#555' }}
                     >
                       {annotation.secondaryCategory}
                     </span>
