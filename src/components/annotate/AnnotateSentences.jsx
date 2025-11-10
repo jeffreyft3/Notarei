@@ -27,10 +27,11 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
     ]
 
     const handleClickSentence = useCallback((s, index) => {
+        const resolvedOrder = typeof s?.sentenceOrder === 'number' ? s.sentenceOrder : index
         setActiveIndex(index)
         // Open the annotation window with this sentence prefilled (same flow as Enter)
-        setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
-        setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '' })
+        setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset, sentenceOrder: resolvedOrder })
+        setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '', sentenceOrder: resolvedOrder })
         setShowAnnotationWindow(true)
     }, [])
 
@@ -47,9 +48,10 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
             e.preventDefault()
                 if (activeIndex >= 0) {
                     const s = articleSentences[activeIndex]
+                    const resolvedOrder = typeof s?.sentenceOrder === 'number' ? s.sentenceOrder : activeIndex
                     // Open the annotation window with this sentence prefilled
-                    setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
-                    setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '' })
+                    setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset, sentenceOrder: resolvedOrder })
+                    setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', note: '', sentenceOrder: resolvedOrder })
                     setShowAnnotationWindow(true)
                 }
         }
@@ -103,6 +105,10 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                 }
                 const saveAnnotation = () => {
                     if (!pendingSelection || !currentAnnotation?.primaryCategory) return
+                    const order = typeof pendingSelection?.sentenceOrder === 'number'
+                        ? pendingSelection.sentenceOrder
+                        : (activeIndex >= 0 ? activeIndex : null)
+
                     const newAnn = {
                         id: Date.now(),
                         text: pendingSelection.text,
@@ -112,7 +118,9 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                         note: currentAnnotation.note || '',
                         startOffset: pendingSelection.startOffset,
                         endOffset: pendingSelection.endOffset,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        sentenceOrder: typeof order === 'number' ? order : null,
+                        sentence_order: typeof order === 'number' ? order : null
                     }
                     onAddAnnotation && onAddAnnotation(newAnn)
                     setShowAnnotationWindow(false)

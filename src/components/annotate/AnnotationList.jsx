@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import './annotate.css'
 import { categoryColors, getAnnotationHexColor } from './colorUtils'
 
-const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, onHoverAnnotation }) => {
+const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, onHoverAnnotation, articleText, articleSentences }) => {
   const [editingAnnotation, setEditingAnnotation] = useState(null)
   const [editCategory, setEditCategory] = useState('')
   const [editSecondaryCategory, setEditSecondaryCategory] = useState('')
@@ -23,13 +23,67 @@ const AnnotationList = ({ annotations, onRemoveAnnotation, onUpdateAnnotation, o
 
   // Color mapping moved to colorUtils
 
+  const resolveSentenceOrderFromOffsets = (annotation) => {
+    if (!annotation || !Array.isArray(articleSentences)) return null
+    if (typeof annotation?.sentenceOrder === 'number') return annotation.sentenceOrder
+    if (typeof annotation?.sentence_order === 'number') return annotation.sentence_order
+
+    if (typeof annotation?.startOffset !== 'number') return null
+
+    for (let i = 0; i < articleSentences.length; i++) {
+      const sentence = articleSentences[i]
+      const start = typeof sentence?.startOffset === 'number' ? sentence.startOffset : 0
+      const end = typeof sentence?.endOffset === 'number' ? sentence.endOffset : start + (sentence?.text?.length || 0)
+      if (annotation.startOffset >= start && annotation.startOffset < end) {
+        return typeof sentence?.sentenceOrder === 'number' ? sentence.sentenceOrder : i
+      }
+    }
+
+    return null
+  }
+
+  const normalizeAnnotationsWithSentenceOrder = () => {
+    if (!annotations || annotations.length === 0) return []
+
+    return annotations.map((annotation) => {
+      if (!annotation) return annotation
+      const resolvedOrder = resolveSentenceOrderFromOffsets(annotation)
+      const sentenceOrder = typeof resolvedOrder === 'number'
+        ? resolvedOrder
+        : (typeof annotation?.sentenceOrder === 'number'
+          ? annotation.sentenceOrder
+          : (typeof annotation?.sentence_order === 'number' ? annotation.sentence_order : null))
+
+      return {
+        ...annotation,
+        sentenceOrder: sentenceOrder,
+        sentence_order: sentenceOrder,
+      }
+    })
+  }
+
   const handleSubmit = () => {
     if (annotations && annotations.length > 0) {
-      // Save annotations to localStorage with timestamp
+      const normalizedAnnotations = normalizeAnnotationsWithSentenceOrder()
+      normalizedAnnotations.forEach((normalized, idx) => {
+        const original = annotations[idx]
+        if (!original || !normalized) return
+        if (original?.sentenceOrder !== normalized?.sentenceOrder || original?.sentence_order !== normalized?.sentence_order) {
+          onUpdateAnnotation && onUpdateAnnotation(normalized.id, {
+            sentenceOrder: normalized.sentenceOrder,
+            sentence_order: normalized.sentence_order
+          })
+        }
+      })
+
+      // Save annotations to localStorage with timestamp and article data
       const submissionData = {
-        annotations: annotations,
+        annotations: normalizedAnnotations,
+        articleText: articleText,
+        articleSentences: articleSentences,
         submittedAt: new Date().toISOString(),
-        totalCount: annotations.length
+        sentence_order: articleSentences.map((s, idx) => idx),
+        totalCount: normalizedAnnotations.length
       }
       localStorage.setItem('submittedAnnotations', JSON.stringify(submissionData))
       

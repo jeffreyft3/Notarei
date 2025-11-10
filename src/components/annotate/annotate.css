@@ -417,7 +417,8 @@
 
  .annotation-window textarea {
       width: 100%;
-      padding: 20px;
+      padding: 10px 20px;
+      line-height: 2;;
       margin: 10px 0;
       border: none;
       background: #ededed;
@@ -801,4 +802,65 @@
   padding: 24px;
   text-align: center;
   color: #666;
+}
+
+/* Review sentence helpers */
+.review-mismatch-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(239, 68, 68, 0.16); /* red-500 alpha */
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.sentence-review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.review-tag {
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  background: #f9fafb; /* gray-50 */
+}
+
+.user-tag { border-color: #93c5fd; background: #eff6ff; }
+.opp-tag { border-color: #fca5a5; background: #fef2f2; }
+.pass-tag { border-color: #86efac; background: #f0fdf4; }
+.fail-tag { border-color: #fca5a5; background: #fef2f2; }
+.empty-tag { border-color: #e5e7eb; background: #f9fafb; }
+
+/* Review Progress Styles */
+.review-progress {
+	margin-top: 8px;
+}
+
+.progress-indicator {
+	font-size: 0.9rem;
+	padding: 6px 12px;
+	border-radius: 8px;
+	font-weight: 600;
+	background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.15));
+	color: #2563eb;
+	border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.progress-indicator.threshold-met {
+	background: linear-gradient(135deg, rgba(22, 163, 74, 0.1), rgba(21, 128, 61, 0.15));
+	color: #16a34a;
+	border-color: rgba(22, 163, 74, 0.3);
+}
+
+/* Review sentence states */
+.review-neutral {
+	background: #f8fafc;
+	border-left: 3px solid #64748b;
+}
+
+.review-neutral:hover {
+	background: #f1f5f9;
 }
