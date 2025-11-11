@@ -5,7 +5,7 @@ import { categoryColors, getAnnotationHexColor } from './colorUtils'
 
 
 
-const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSelectAnnotation, peerSubmittedData }) => {
+const GuidanceToolbar = ({ stage, annotations, unmatchedAnnotations, onHoverAnnotation, onSelectAnnotation, matchPercentage, thresholdMet, totalSentences, matchingCount }) => {
   const [submittedData, setSubmittedData] = useState(null)
   const [selectedReviewId, setSelectedReviewId] = useState(null)
 
