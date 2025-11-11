@@ -61,8 +61,12 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
             <span className="stage-indicator-value">{stageLabel}</span>
           </div>
           <div className="guidance-summary">
-            <span className="summary-label">Annotations</span>
-            <span className="summary-value">{annotations.length}</span>
+            <span className="summary-label">
+              {stage === "reviewing" ? "Threshold" : "Annotations"}
+            </span>
+            <span className="summary-value">
+              {stage === "reviewing" ? "85%" : annotations.length}
+            </span>
           </div>
           </aside>
 
@@ -89,14 +93,53 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
           {
             stage === "reviewing" && (
               <div>
-                {!submittedData || !submittedData.annotations || submittedData.annotations.length === 0 ? (
+                {!unmatchedAnnotations || unmatchedAnnotations.length === 0 ? (
                   <div className="guidance-tip">
-                    <p>No submitted annotations found. Submit annotations in the Annotating mode first.</p>
+                    <p>Great! All annotations match between you and your co-annotator.</p>
                   </div>
                 ) : (
                   <div>
-                    <div className="guidance-summary" style={{ marginBottom: '15px' }}>
-                      {/* Something about the matching %, only 90% match, under the threshold. */}
+                    <div style={{ marginBottom: '15px' }}>
+                      <div style={{
+                        background: (() => {
+                          const percentage = matchPercentage || 0
+                          if (percentage >= 85) return 'linear-gradient(135deg, #10b981, #059669)'
+                          if (percentage >= 70) return 'linear-gradient(135deg, #f59e0b, #d97706)'
+                          if (percentage >= 50) return 'linear-gradient(135deg, #f97316, #ea580c)'
+                          return 'linear-gradient(135deg, #ef4444, #dc2626)'
+                        })(),
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        color: 'white',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ 
+                          fontSize: '1.1em', 
+                          fontWeight: '600',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }}>
+                          <span>Match Progress</span>
+                          <span style={{ fontSize: '1.3em' }}>{matchPercentage}%</span>
+                        </div>
+                        <div style={{ 
+                          fontSize: '0.85em', 
+                          opacity: 0.9,
+                          marginTop: '4px'
+                        }}>
+                          {thresholdMet ? '✓ Threshold met (85%)' : (() => {
+                            const requiredMatches = Math.ceil((totalSentences || 0) * 0.85)
+                            const currentMatches = matchingCount || 0
+                            const needed = Math.max(0, requiredMatches - currentMatches)
+                            return `Need ${needed} more matching annotation${needed !== 1 ? 's' : ''} (${requiredMatches} total required)`
+                          })()}
+                        </div>
+                      </div>
+                      <small style={{ color: '#666' }}>
+                        {unmatchedAnnotations.length} annotation(s) need attention
+                      </small>
                     </div>
                     <div style={{ 
                       maxHeight: '400px', 
@@ -106,9 +149,11 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                       borderRadius: '8px'
                     }}>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {submittedData.annotations.map((ann, index) => {
+                        {unmatchedAnnotations.map((ann, index) => {
                           const active = selectedReviewId === (ann.id ?? null)
                           const color = getAnnotationHexColor(ann) || 'var(--primary)'
+                          const isOpponentOnly = ann.type === 'opponent-only'
+                          
                           return (
                             <li
                               key={ann.id || index}
@@ -123,22 +168,53 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
                                 borderRadius: '6px',
                                 borderLeft: `4px solid ${color}`,
                                 cursor: 'pointer',
-                                boxShadow: active ? '0 0 0 2px rgba(0,0,0,0.05) inset' : 'none'
+                                boxShadow: active ? '0 0 0 2px rgba(0,0,0,0.05) inset' : 'none',
+                                opacity: isOpponentOnly ? 0.7 : 1,
+                                filter: isOpponentOnly ? 'brightness(1.1)' : 'none'
                               }}
                             >
-                              <strong style={{ color: '#222', background: color, padding: '2px 6px', borderRadius: '4px' }}>{ann.category}</strong>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                {!isOpponentOnly && (
+                                  <strong style={{ 
+                                    color: '#222', 
+                                    background: color, 
+                                    padding: '2px 6px', 
+                                    borderRadius: '4px'
+                                  }}>
+                                    {ann.primaryCategory || ann.category}
+                                  </strong>
+                                )}
+                                <span style={{ 
+                                  fontSize: '0.75em',
+                                  color: isOpponentOnly ? '#888' : '#666',
+                                  fontStyle: 'italic'
+                                }}>
+                                  {ann.displayText}
+                                </span>
+                                {/* {isOpponentOnly && (
+                                  <span style={{ 
+                                    fontSize: '0.7em',
+                                    background: '#f3f4f6',
+                                    color: '#6b7280',
+                                    padding: '1px 4px',
+                                    borderRadius: '3px'
+                                  }}>
+                                    no conflict
+                                  </span>
+                                )} */}
+                              </div>
                               <p style={{ 
                                 margin: '8px 0 0 0', 
                                 fontSize: '0.9em',
-                                color: '#555'
+                                color: isOpponentOnly ? '#777' : '#555'
                               }}>
-                                "{ann.text}"
+                                "{ann.text.slice(0, 50)}{ann.text.length > 50 ? '...' : ''}"
                               </p>
                               {ann.note && (
                                 <p style={{ 
                                   margin: '5px 0 0 0', 
                                   fontSize: '0.85em',
-                                  color: '#666'
+                                  color: isOpponentOnly ? '#888' : '#666'
                                 }}>
                                   Note: {ann.note}
                                 </p>
@@ -153,7 +229,7 @@ const GuidanceToolbar = ({ stage, setStage, annotations, onHoverAnnotation, onSe
 
               <div className="guidance-tip" style={{ marginTop: '20px' }}>
                 <span className="tip-label">Tip</span>
-                <p>Engage in discussions with collaborators on specific annotations.</p>
+                <p>Focus on disagreements (normal opacity) first. Lighter items show co-annotator annotations where you didn't annotate.</p>
               </div>
               </div>
             )

@@ -11,6 +11,8 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
     const [selectedReviewAnnotation, setSelectedReviewAnnotation] = useState(null)
     const [revisedAnnotations, setRevisedAnnotations] = useState([])
     const [editedAnnotations, setEditedAnnotations] = useState(userAnnotations || [])
+    const [matchPercentage, setMatchPercentage] = useState(0)
+    const [selectedSentenceIndex, setSelectedSentenceIndex] = useState(null)
 
     // Normalize opponent annotations to an array
     const oppAnnotations = useMemo(() => {
@@ -73,23 +75,38 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
 
     // Calculate threshold progress
     const thresholdProgress = useMemo(() => {
-        const totalAnnotations = Math.max(editedAnnotations.length, oppAnnotations.length, articleSentences.length)
-        if (totalAnnotations === 0) return { met: false, percentage: 0 }
+        if (articleSentences.length === 0) {
+            const result = { met: false, percentage: 0 }
+            setMatchPercentage(0)
+            return result
+        }
         
         // Count sentences where both sides agree (either both have matching categories or both have no annotations)
         let matchingCount = 0
         
         articleSentences.forEach((sentence, idx) => {
-            const sentenceStart = sentence.startOffset || 0
-            const sentenceEnd = sentenceStart + (sentence.text?.length || 0)
+            // Use sentenceOrder when available for more accurate matching
+            let userAnns, oppAnns
             
-            // Find annotations for this sentence
-            const userAnns = editedAnnotations.filter(ann => 
-                ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd
-            )
-            const oppAnns = oppAnnotations.filter(ann => 
-                ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd
-            )
+            if (typeof sentence.sentenceOrder === 'number') {
+                userAnns = editedAnnotations.filter(ann => 
+                    typeof ann.sentenceOrder === 'number' && ann.sentenceOrder === sentence.sentenceOrder
+                )
+                oppAnns = oppAnnotations.filter(ann => 
+                    typeof ann.sentenceOrder === 'number' && ann.sentenceOrder === sentence.sentenceOrder
+                )
+            } else {
+                // Fallback to range-based matching
+                const sentenceStart = sentence.startOffset || 0
+                const sentenceEnd = sentenceStart + (sentence.text?.length || 0)
+                
+                userAnns = editedAnnotations.filter(ann => 
+                    ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd
+                )
+                oppAnns = oppAnnotations.filter(ann => 
+                    ann.startOffset >= sentenceStart && ann.startOffset < sentenceEnd
+                )
+            }
             
             const hasUser = userAnns.length > 0
             const hasOpp = oppAnns.length > 0
@@ -111,14 +128,134 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
             // If one has annotation and one doesn't, it's not a match (don't increment)
         })
         
-        const percentage = articleSentences.length > 0 ? (matchingCount / articleSentences.length) * 100 : 0
+        const percentage = (matchingCount / articleSentences.length) * 100
+        const roundedPercentage = Math.round(percentage)
+        
+        // Update the match percentage state
+        setMatchPercentage(roundedPercentage)
+        
         return { 
             met: percentage >= 85, // 85% threshold
-            percentage: Math.round(percentage),
+            percentage: roundedPercentage,
             matchingCount,
             totalAnnotations: articleSentences.length
         }
     }, [editedAnnotations, oppAnnotations, articleSentences])
+
+    // Calculate unmatched annotations for the GuidanceToolbar
+    const unmatchedAnnotations = useMemo(() => {
+        const unmatched = []
+        
+        // Find user annotations that don't match any opponent annotations (conflicts)
+        editedAnnotations.forEach(userAnn => {
+            let matchingOpponent = null
+            
+            // Look for opponent annotations in the same sentence
+            oppAnnotations.forEach(oppAnn => {
+                // Check if they're for the same sentence (prefer sentenceOrder, fallback to range)
+                let sameSentence = false
+                if (typeof userAnn.sentenceOrder === 'number' && typeof oppAnn.sentenceOrder === 'number') {
+                    sameSentence = userAnn.sentenceOrder === oppAnn.sentenceOrder
+                } else {
+                    // Fallback to range overlap
+                    const userStart = userAnn.startOffset || 0
+                    const userEnd = userStart + (userAnn.text?.length || 0)
+                    const oppStart = oppAnn.startOffset || 0
+                    const oppEnd = oppStart + (oppAnn.text?.length || 0)
+                    sameSentence = userStart < oppEnd && oppStart < userEnd
+                }
+                
+                if (sameSentence) {
+                    matchingOpponent = oppAnn
+                }
+            })
+            
+            // If there's an opponent annotation but different categories, it's a conflict
+            if (matchingOpponent && (userAnn.primaryCategory || userAnn.category) !== (matchingOpponent.primaryCategory || matchingOpponent.category)) {
+                unmatched.push({
+                    ...userAnn,
+                    type: 'user-disagreement',
+                    displayText: `Them: ${matchingOpponent.primaryCategory || matchingOpponent.category}`,
+                    opponentCategory: matchingOpponent.primaryCategory || matchingOpponent.category,
+                    isUserAnnotation: true
+                })
+            }
+        })
+        
+        // Find opponent annotations that don't have any user annotation for the same sentence (non-conflicts)
+        oppAnnotations.forEach(oppAnn => {
+            let hasUserForSentence = false
+            
+            // Check if user has ANY annotation for this sentence
+            editedAnnotations.forEach(userAnn => {
+                let sameSentence = false
+                if (typeof userAnn.sentenceOrder === 'number' && typeof oppAnn.sentenceOrder === 'number') {
+                    sameSentence = userAnn.sentenceOrder === oppAnn.sentenceOrder
+                } else {
+                    // Fallback to range overlap
+                    const userStart = userAnn.startOffset || 0
+                    const userEnd = userStart + (userAnn.text?.length || 0)
+                    const oppStart = oppAnn.startOffset || 0
+                    const oppEnd = oppStart + (oppAnn.text?.length || 0)
+                    sameSentence = userStart < oppEnd && oppStart < userEnd
+                }
+                
+                if (sameSentence) {
+                    hasUserForSentence = true
+                }
+            })
+            
+            if (!hasUserForSentence) {
+                unmatched.push({
+                    ...oppAnn,
+                    type: 'opponent-only',
+                    displayText: `Co-annotator: ${oppAnn.primaryCategory || oppAnn.category}`,
+                    isUserAnnotation: false
+                })
+            }
+        })
+        
+        // Sort by sentence order or start offset
+        return unmatched.sort((a, b) => {
+            const aOrder = typeof a.sentenceOrder === 'number' ? a.sentenceOrder : (a.startOffset || 0)
+            const bOrder = typeof b.sentenceOrder === 'number' ? b.sentenceOrder : (b.startOffset || 0)
+            return aOrder - bOrder
+        })
+    }, [editedAnnotations, oppAnnotations])
+
+    // Handle selecting an annotation and finding its corresponding sentence
+    const handleSelectReviewAnnotation = (annotation) => {
+        setSelectedReviewAnnotation(annotation)
+        
+        if (annotation && articleSentences && articleSentences.length > 0) {
+            // Find the sentence that contains this annotation
+            let sentenceIndex = -1
+            
+            // First try to find by sentenceOrder if available
+            if (typeof annotation.sentenceOrder === 'number') {
+                sentenceIndex = annotation.sentenceOrder
+                // Adjust if sentenceOrder appears 1-based
+                if (sentenceIndex >= articleSentences.length && sentenceIndex - 1 >= 0) {
+                    sentenceIndex = sentenceIndex - 1
+                }
+            }
+            
+            // Fallback to finding by text range
+            if (sentenceIndex === -1 || sentenceIndex >= articleSentences.length) {
+                sentenceIndex = articleSentences.findIndex(sentence => {
+                    const sentenceStart = sentence.startOffset || 0
+                    const sentenceEnd = sentenceStart + (sentence.text?.length || 0)
+                    return annotation.startOffset >= sentenceStart && annotation.startOffset < sentenceEnd
+                })
+            }
+            
+            // Set the selected sentence index
+            setSelectedSentenceIndex(sentenceIndex >= 0 ? sentenceIndex : null)
+        } else {
+            // Clear selection when annotation is null
+            setSelectedSentenceIndex(null)
+        }
+    }
 
     // Handle editing/accepting annotations
     const handleEditAnnotation = (updatedAnnotation) => {
@@ -184,8 +321,13 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
                 <GuidanceToolbar 
                     stage={"reviewing"}
                     annotations={editedAnnotations}
+                    unmatchedAnnotations={unmatchedAnnotations}
                     onHoverAnnotation={setHoveredAnnotationId}
-                    onSelectAnnotation={setSelectedReviewAnnotation}
+                    onSelectAnnotation={handleSelectReviewAnnotation}
+                    matchPercentage={matchPercentage}
+                    thresholdMet={thresholdProgress.met}
+                    totalSentences={articleSentences.length}
+                    matchingCount={thresholdProgress.matchingCount}
                 />
             </div>
             <div className="canvasMainWrapper">
@@ -204,6 +346,7 @@ const Review = ({ opponentAnnotations, userAnnotations, articleSentences, articl
                     opponentAnnotations={oppAnnotations}
                     threshold={0.85}
                     onSelectAnnotation={setSelectedReviewAnnotation}
+                    selectedSentenceIndex={selectedSentenceIndex}
                 />
             </div>
             <div className="rightPaneWrapper">

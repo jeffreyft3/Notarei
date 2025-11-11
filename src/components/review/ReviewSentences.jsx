@@ -1,5 +1,5 @@
 "use client"
-import React, { useMemo, useCallback } from 'react'
+import React, { useMemo, useCallback, useRef, useEffect } from 'react'
 import '@/components/annotate/annotate.css'
 
 /**
@@ -14,7 +14,9 @@ const ReviewSentences = ({
 	opponentAnnotations = [],
 	threshold = 0.85,
 	onSelectAnnotation,
+	selectedSentenceIndex = null,
 }) => {
+	const containerRef = useRef(null)
 
 		// Bucket annotations by sentence using range containment (startOffset within [start,end))
 		// Bucket annotations by sentence using sentenceOrder when available, else range containment
@@ -127,8 +129,21 @@ const ReviewSentences = ({
 		}
 	}, [onSelectAnnotation])
 
+	// Scroll to selected sentence when selectedSentenceIndex changes
+	useEffect(() => {
+		if (selectedSentenceIndex !== null && containerRef.current) {
+			const sentenceElement = containerRef.current.querySelector(`[data-sentence-index="${selectedSentenceIndex}"]`)
+			if (sentenceElement) {
+				sentenceElement.scrollIntoView({ 
+					behavior: 'smooth', 
+					block: 'center' 
+				})
+			}
+		}
+	}, [selectedSentenceIndex])
+
 	return (
-		<div className="sentence-canvas" style={{ position: 'relative' }}>
+		<div className="sentence-canvas" style={{ position: 'relative' }} ref={containerRef}>
 			<div className="sentence-canvas-meta">
 				<span className="sentence-canvas-meta-left">Review Mode • Threshold {Math.round(threshold * 100)}%</span>
 				<span className="sentence-canvas-meta-right">{sentenceStates.filter(s => s.passed).length}/{sentenceStates.length} passed</span>
@@ -140,15 +155,20 @@ const ReviewSentences = ({
 						// Determine visual state - if both have no annotations and it's a match, show as neutral
 						const isNoAnnotationMatch = !hasUser && !hasOpp && passed
 						const displayClass = isNoAnnotationMatch ? 'review-neutral' : (passed ? 'review-passed' : 'review-failed')
+						
+						// Check if this sentence is currently selected
+						const isSelected = selectedSentenceIndex === idx
+						const finalClass = `sentence-row review-row ${displayClass} ${isSelected ? 'selected' : ''}`
 				
 				return (
 					<div
 						key={sentence.id || sentence.startOffset}
-						className={`sentence-row review-row ${displayClass}`}
+						className={finalClass}
+						data-sentence-index={idx}
 						onClick={() => handleSentenceClick(state)}
 						role="button"
 						tabIndex={0}
-						aria-label={`Sentence review ${passed ? 'passed' : 'requires attention'}`}
+						aria-label={`Sentence review ${passed ? 'passed' : 'requires attention'}${isSelected ? ' (currently selected)' : ''}`}
 					>
 								<div className="sentence-number">{displayNumber}</div>
 						<div className="sentence-text-wrapper" style={{ position: 'relative' }}>
