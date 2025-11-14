@@ -824,21 +824,22 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding-top: 6px;
+  padding: 6px;
 }
 
 .review-tag {
-  font-size: 0.75rem;
+  font-size: 0.88rem;
   border-radius: 9999px;
-  padding: 2px 8px;
-  border: 1px solid #e5e7eb; /* gray-200 */
+  padding: 4px 9px;
+  font-weight: 800;;
+  border: 2.5px solid #e5e7eb; /* gray-200 */
   background: #f9fafb; /* gray-50 */
 }
 
-.user-tag { border-color: #93c5fd; background: #eff6ff; }
-.opp-tag { border-color: #fca5a5; background: #fef2f2; }
-.pass-tag { border-color: #86efac; background: #f0fdf4; }
-.fail-tag { border-color: #fca5a5; background: #fef2f2; }
+.user-tag { border-color: #3a96ff; background: #eff6ff; }
+.opp-tag { border-color: #ff4545; background: #fef2f2; }
+.pass-tag { border-color: #00e353; background: #00e353; color: #fff; }
+.fail-tag { border-color: #c30000; background: #c30000; color: #fff; }
 .empty-tag { border-color: #e5e7eb; background: #f9fafb; }
 
 /* Review Progress Styles */
