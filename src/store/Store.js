@@ -26,7 +26,7 @@ const createHybridStorage = () => {
       // 2. Fall back to API if no localStorage
       try {
         console.log('[Store] Attempting to fetch articles from API...')
-        const response = await fetch('http://localhost:3001/api/articles', {
+        const response = await fetch('http://127.0.0.1:4000/api/articles', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         })
