@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import './navigation.css'
+import {useUser } from '@auth0/nextjs-auth0/client'
 
 const Navigation = () => {
   const pathname = usePathname()
@@ -11,6 +12,7 @@ const Navigation = () => {
   const desktopNavRef = useRef(null)
   const itemRefs = useRef([])
   const [indicatorState, setIndicatorState] = useState({ width: 0, left: 0, visible: false })
+  const { user, isLoading } = useUser()
 
   const navItems = [
     { name: 'Annotate', href: '/annotate' },
@@ -115,6 +117,19 @@ const Navigation = () => {
               }}
             />
           )}
+          {/* Auth0 Buttons Desktop */}
+          {!isLoading && (
+            user ? (
+              <>
+                <span className="nav-user">{user.name || user.email}</span>
+                <Link href="/auth/logout" className="nav-auth-btn">Logout</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login" className="nav-auth-btn">Login</Link>
+              </>
+            )
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -165,6 +180,20 @@ const Navigation = () => {
                 </Link>
               </motion.div>
             ))}
+            {/* Auth0 Buttons Mobile */}
+            {!isLoading && (
+              user ? (
+                <>
+                  <span className="nav-user">{user.name || user.email}</span>
+                  <Link href="/auth/logout" className="nav-auth-btn" onClick={closeMobileMenu}>Logout</Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="nav-auth-btn" onClick={closeMobileMenu}>Login</Link>
+                  <Link href="/auth/signup" className="nav-auth-btn" onClick={closeMobileMenu}>Sign Up</Link>
+                </>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>
