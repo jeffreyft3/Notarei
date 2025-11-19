@@ -115,7 +115,10 @@ const CollaborationPane = ({
   }
 
   const handleSubmitToBackend = async () => {
+    console.log("Submitting revised annotations to backend...")
+    console.log("Revised annotations:", revisedAnnotations)
     if (!onSubmitRevisedAnnotations || !thresholdMet) return
+    
     
     setIsSubmitting(true)
     try {

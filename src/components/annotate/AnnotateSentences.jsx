@@ -8,7 +8,8 @@ import AnnotationWindow from './AnnotationWindow'
 // Sentence-level canvas: displays each sentence on its own line with numbering, pre-highlighted.
 // Hovering emphasizes the sentence; clicking creates a new annotation covering the sentence.
 const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation, scrollBuffer = 2 }) => {
-        // Start with no active sentence; first arrow key press primes focus
+    console.log("articleSentences", articleSentences)
+    // Start with no active sentence; first arrow key press primes focus
         const [activeIndex, setActiveIndex] = useState(-1)
         const containerRef = useRef(null)
     const [showAnnotationWindow, setShowAnnotationWindow] = useState(false)
@@ -29,8 +30,8 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
     const handleClickSentence = useCallback((s, index) => {
         setActiveIndex(index)
         // Open the annotation window with this sentence prefilled (same flow as Enter)
-        setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
-        setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
+        setPendingSelection({ text: s.sentence_text, startOffset: s.startOffset, endOffset: s.endOffset })
+        setCurrentAnnotation({ text: s.sentence_text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
         setShowAnnotationWindow(true)
     }, [])
 
@@ -48,8 +49,8 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                 if (activeIndex >= 0) {
                     const s = articleSentences[activeIndex]
                     // Open the annotation window with this sentence prefilled
-                    setPendingSelection({ text: s.text, startOffset: s.startOffset, endOffset: s.endOffset })
-                    setCurrentAnnotation({ text: s.text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
+                    setPendingSelection({ text: s.sentence_text, startOffset: s.startOffset, endOffset: s.endOffset })
+                    setCurrentAnnotation({ text: s.sentence_text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
                     setShowAnnotationWindow(true)
                 }
         }
@@ -228,7 +229,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                           className="sentence-text pre-highlight"
                           style={bg ? { background: bg, boxShadow: `inset 0 0 0 1px ${outline}` } : undefined}
                         >
-                          {s.text}
+                          {s.sentence_text}
                         </div>
                       )
                     })()}
