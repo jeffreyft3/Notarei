@@ -79,7 +79,27 @@ const AdminPage = () => {
       return { ...prev, [articleId]: list }
     })
   }
-
+  // const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE || ''
+        // {ADMIN_CODE ? (
+        //   <p style={{ color: '#777' }}>Enter the admin code to continue.</p>
+        // ) : (
+        //   <p style={{ color: '#777' }}>No admin code configured. On localhost you can continue without a code. Set NEXT_PUBLIC_ADMIN_CODE in .env.local for production-like checks.</p>
+        // )}
+        // <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        //   {ADMIN_CODE && (
+        //     <input
+        //       type="password"
+        //       placeholder="Admin code"
+        //       value={code}
+        //       onChange={(e) => setCode(e.target.value)}
+        //       style={{ flex: 1, padding: '10px 12px', borderRadius: 6, border: '1px solid #ddd' }}
+        //     />
+        //   )}
+        //   <button onClick={verify} style={{ padding: '10px 14px', border: 'none', borderRadius: 6, background: '#007acc', color: '#fff', cursor: 'pointer' }}>
+        //     Continue
+        //   </button>
+        // </div>
+        // {error && <p style={{ color: '#b00020', marginTop: 10 }}>{error}</p>}
 
   if (!user || user.role !== 'admin') {
     return (
@@ -95,3 +115,5 @@ const AdminPage = () => {
 }
 
 export default AdminPage
+
+

@@ -12,7 +12,15 @@ console.log("AUTH0_CLIENT_ID:", process.env.AUTH0_CLIENT_ID);
 console.log("AUTH0_CLIENT_SECRET:", process.env.AUTH0_CLIENT_SECRET);
 console.log("AUTH0_SECRET:", process.env.AUTH0_SECRET);
 console.log("API_URL:", process.env.NEXT_PUBLIC_API_URL);
-
+console.log("AUTH0_AUDIENCE:", process.env.AUTH0_AUDIENCE);
+console.log("AUTH0_SCOPE:", process.env.AUTH0_SCOPE);
 console.log("Current URL detection:", process.env.VERCEL_URL || 'No VERCEL_URL');
 console.log("=== End Production Debug ===");
-export const auth0 = new Auth0Client();
+
+export const auth0 = new Auth0Client({
+  // DON'T include useDPoP: true
+  authorizationParameters: {
+    audience: process.env.AUTH0_AUDIENCE, // Required for access tokens
+    scope: process.env.AUTH0_SCOPE
+  }
+});
