@@ -4,20 +4,76 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import './navigation.css'
-import {useUser } from '@auth0/nextjs-auth0/client'
+import { useUser } from '@auth0/nextjs-auth0/client'
+// import { getAccessToken } from '@auth0/nextjs-auth0/client'
+import { useUserStore } from '@/store/useUserStore'
 
 const Navigation = () => {
+  const { user, isLoading } = useUser()
+  const appUser = useUserStore(s => s.user)
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const desktopNavRef = useRef(null)
   const itemRefs = useRef([])
   const [indicatorState, setIndicatorState] = useState({ width: 0, left: 0, visible: false })
-  const { user, isLoading } = useUser()
+  const [accessToken, setAccessToken] = useState(null);
+  const [userData, setUserData] = useState(null);
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const response = await fetch('/api/auth/token');
+        const data = await response.json();
+        setAccessToken(data.accessToken);
+      } catch (error) {
+        console.error('Error fetching token:', error);
+      }
+    };
+
+    if (user) {
+      fetchToken();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/get`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            auth0_id: user.sub,
+            email: user.email,
+          }),
+        });
+        console.log('Made request to fetch user data with access token:', accessToken);
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data.user);
+        } else {
+          setUserData(null);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setUserData(null);
+      }
+    };
+
+    if (accessToken && user) {
+      fetchUserData();
+    } else {
+      setUserData(null);
+    }
+  }, [accessToken, user]);
+
 
   const navItems = [
     { name: 'Annotate', href: '/annotate' },
-    { name: 'Review', href: '/review' },
-    { name: 'User', href: '/user' }
+    { name: 'Review', href: '/review' }
   ]
 
   const isActive = (href) => {
@@ -61,6 +117,7 @@ const Navigation = () => {
       window.removeEventListener('resize', handleResize)
     }
   }, [pathname])
+
 
   return (
     <motion.nav 
@@ -117,19 +174,106 @@ const Navigation = () => {
               }}
             />
           )}
-          {/* Auth0 Buttons Desktop */}
-          {!isLoading && (
-            user ? (
-              <>
-                <span className="nav-user">{user.name || user.email}</span>
-                <Link href="/auth/logout" className="nav-auth-btn">Logout</Link>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/login" className="nav-auth-btn">Login</Link>
-              </>
-            )
-          )}
+          {/* Auth Section Desktop */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
+            {!isLoading && (
+              user ? (
+                <>
+                  {/* Admin Panel Button */}
+                  {appUser && (appUser.role === 'admin' || appUser.role === 'master') && (
+                    <motion.div
+                      whileHover={{ scale: 1.05, boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)' }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                    >
+                      <Link
+                        href="/admin"
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: '#fff',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          textDecoration: 'none',
+                          display: 'inline-block',
+                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                        }}
+                      >
+                        Admin Panel
+                      </Link>
+                    </motion.div>
+                  )}
+                  {/* User Profile Link */}
+                  <motion.div
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.95 }}
+                    // transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  >
+                    <Link
+                      href="/user"
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        background: '#f5f5f5',
+                        color: '#333',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        textDecoration: 'none',
+                        display: 'inline-block',
+                        border: '1px solid #e0e0e0',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {user.name || user.email}
+                    </Link>
+                  </motion.div>
+                  {/* Logout Button */}
+                  <motion.div
+                    whileHover={{ scale: 1.03, backgroundColor: '#d32f2f', boxShadow: '0 6px 16px rgba(244, 67, 54, 0.4)' }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      background: '#f44336',
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                    }}
+                  >
+                    <Link href="/auth/logout" style={{ color: 'inherit', textDecoration: 'none' }}>
+                      Logout
+                    </Link>
+                  </motion.div>
+                </>
+              ) : (
+                <motion.div
+                  whileHover={{ scale: 1.05, backgroundColor: '#005a9c', boxShadow: '0 6px 16px rgba(0, 122, 204, 0.4)' }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '8px',
+                    background: '#007acc',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0, 122, 204, 0.3)',
+                  }}
+                >
+                  <Link href="/auth/login" style={{ color: 'inherit', textDecoration: 'none' }}>
+                    Login
+                  </Link>
+                </motion.div>
+              )
+            )}
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
@@ -180,20 +324,109 @@ const Navigation = () => {
                 </Link>
               </motion.div>
             ))}
-            {/* Auth0 Buttons Mobile */}
-            {!isLoading && (
-              user ? (
-                <>
-                  <span className="nav-user">{user.name || user.email}</span>
-                  <Link href="/auth/logout" className="nav-auth-btn" onClick={closeMobileMenu}>Logout</Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/auth/login" className="nav-auth-btn" onClick={closeMobileMenu}>Login</Link>
-                  <Link href="/auth/signup" className="nav-auth-btn" onClick={closeMobileMenu}>Sign Up</Link>
-                </>
-              )
-            )}
+            {/* Auth Section Mobile */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+              {!isLoading && (
+                user ? (
+                  <>
+                    {/* Admin Panel Button (Mobile) */}
+                    {appUser && (appUser.role === 'admin' || appUser.role === 'master') && (
+                      <motion.div
+                        whileHover={{ scale: 1.02, boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)' }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                      >
+                        <Link
+                          href="/admin"
+                          onClick={closeMobileMenu}
+                          style={{
+                            padding: '12px 18px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: '#fff',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            textDecoration: 'none',
+                            display: 'block',
+                            textAlign: 'center',
+                            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                          }}
+                        >
+                          Admin Panel
+                        </Link>
+                      </motion.div>
+                    )}
+                    {/* User Profile Link (Mobile) */}
+                    <motion.div
+                      whileHover={{ scale: 1.02, backgroundColor: '#e8e8e8' }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                    >
+                      <Link
+                        href="/user"
+                        onClick={closeMobileMenu}
+                        style={{
+                          padding: '12px 18px',
+                          borderRadius: '8px',
+                          background: '#f5f5f5',
+                          color: '#333',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          textDecoration: 'none',
+                          display: 'block',
+                          textAlign: 'center',
+                          border: '1px solid #e0e0e0',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {user.name || user.email}
+                      </Link>
+                    </motion.div>
+                    {/* Logout Button (Mobile) */}
+                    <motion.div
+                      whileHover={{ scale: 1.02, backgroundColor: '#d32f2f', boxShadow: '0 6px 16px rgba(244, 67, 54, 0.4)' }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '8px',
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        textAlign: 'center',
+                        boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                      }}
+                    >
+                      <Link href="/auth/logout" onClick={closeMobileMenu} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        Logout
+                      </Link>
+                    </motion.div>
+                  </>
+                ) : (
+                  <motion.div
+                    whileHover={{ scale: 1.02, backgroundColor: '#005a9c', boxShadow: '0 6px 16px rgba(0, 122, 204, 0.4)' }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                    style={{
+                      padding: '12px 20px',
+                      borderRadius: '8px',
+                      background: '#007acc',
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      textAlign: 'center',
+                      boxShadow: '0 4px 12px rgba(0, 122, 204, 0.3)',
+                    }}
+                  >
+                    <Link href="/auth/login" onClick={closeMobileMenu} style={{ color: 'inherit', textDecoration: 'none' }}>
+                      Login
+                    </Link>
+                  </motion.div>
+                )
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

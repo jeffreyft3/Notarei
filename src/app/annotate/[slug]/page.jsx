@@ -29,9 +29,10 @@ const Page = () => {
     // Optional: fetch single article if user lands directly on this route
     const fetchSingle = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/articles/${slug}`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/articles/${slug}`)
         if (!res.ok) throw new Error('Not found')
         const a = await res.json()
+        console.log('Fetched article:', a)
         const normalized = {
           id: a.id || a._id || a.slug || slug,
           title: a.title || 'Untitled',
