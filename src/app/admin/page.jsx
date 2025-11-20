@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useUserStore } from '@/store/useUserStore'
 import { useRouter } from 'next/navigation'
+import ArticleAssign from '@/components/admin/ArticleAssign'
 
 // Placeholder Admin Console with basic client-side gate and drag-and-drop mock UI
 
@@ -31,7 +32,8 @@ const AdminPage = () => {
   useEffect(() => {
     // Redirect if not logged in
     if (user === null) {
-      router.replace('/auth/login')
+
+      // router.replace('/auth/login')
     }
   }, [user, router])
 
@@ -57,51 +59,45 @@ const AdminPage = () => {
   }
 
   // DnD handlers for annotator assignment
-  const onDragStart = (e, userId) => {
-    e.dataTransfer.setData('text/plain', userId)
-  }
-  const onDragOver = (e) => {
-    e.preventDefault()
-  }
-  const onDropToArticle = (e, articleId) => {
-    e.preventDefault()
-    const userId = e.dataTransfer.getData('text/plain')
-    if (!userId) return
+  const handleAssign = (articleId, userId) => {
     setAssignments(prev => {
       const set = new Set(prev[articleId] || [])
       set.add(userId)
       return { ...prev, [articleId]: Array.from(set) }
     })
   }
-  const unassign = (articleId, userId) => {
+
+  const handleUnassign = (articleId, userId) => {
     setAssignments(prev => {
       const list = (prev[articleId] || []).filter(id => id !== userId)
       return { ...prev, [articleId]: list }
     })
   }
-  // const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE || ''
-        // {ADMIN_CODE ? (
-        //   <p style={{ color: '#777' }}>Enter the admin code to continue.</p>
-        // ) : (
-        //   <p style={{ color: '#777' }}>No admin code configured. On localhost you can continue without a code. Set NEXT_PUBLIC_ADMIN_CODE in .env.local for production-like checks.</p>
-        // )}
-        // <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        //   {ADMIN_CODE && (
-        //     <input
-        //       type="password"
-        //       placeholder="Admin code"
-        //       value={code}
-        //       onChange={(e) => setCode(e.target.value)}
-        //       style={{ flex: 1, padding: '10px 12px', borderRadius: 6, border: '1px solid #ddd' }}
-        //     />
-        //   )}
-        //   <button onClick={verify} style={{ padding: '10px 14px', border: 'none', borderRadius: 6, background: '#007acc', color: '#fff', cursor: 'pointer' }}>
-        //     Continue
-        //   </button>
-        // </div>
-        // {error && <p style={{ color: '#b00020', marginTop: 10 }}>{error}</p>}
 
-  if (!user || user.role !== 'admin') {
+  {
+    ADMIN_CODE ? (
+      <p style={{ color: '#777' }}>Enter the admin code to continue.</p>
+    ) : (
+      <p style={{ color: '#777' }}>No admin code configured. On localhost you can continue without a code. Set NEXT_PUBLIC_ADMIN_CODE in .env.local for production-like checks.</p>
+    )
+  }
+  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+    {ADMIN_CODE && (
+      <input
+        type="password"
+        placeholder="Admin code"
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        style={{ flex: 1, padding: '10px 12px', borderRadius: 6, border: '1px solid #ddd' }}
+      />
+    )}
+    <button onClick={verify} style={{ padding: '10px 14px', border: 'none', borderRadius: 6, background: '#007acc', color: '#fff', cursor: 'pointer' }}>
+      Continue
+    </button>
+  </div>
+  { error && <p style={{ color: '#b00020', marginTop: 10 }}>{error}</p> }
+
+  if (!user || (user.role !== 'admin' && user.role !== 'master')) {
     return (
       <div style={{ maxWidth: 560, margin: '60px auto', padding: 20 }}>
         <h1>Admin Console</h1>
@@ -110,7 +106,31 @@ const AdminPage = () => {
       </div>
     )
   }
-
+  return (
+    <div style={{ maxWidth: 1200, margin: '32px auto', padding: '0 16px' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <h1 style={{ margin: 0 }}>Admin Console</h1>
+          {/* <p style={{ color: '#666', margin: '6px 0 0 0' }}>Admin Console Features.</p> */}
+        </div>
+        <button
+          onClick={() => { localStorage.removeItem('isAdmin'); setIsAdmin(false) }}
+          style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: 'pointer' }}
+        >
+          Sign out
+        </button>
+      </header>
+      
+      
+      <ArticleAssign
+        articles={articles}
+        annotators={annotators}
+        assignments={assignments}
+        onAssign={handleAssign}
+        onUnassign={handleUnassign}
+      />
+    </div>
+  )
   // ...existing code...
 }
 
