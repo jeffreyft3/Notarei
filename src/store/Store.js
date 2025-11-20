@@ -26,7 +26,8 @@ const createHybridStorage = () => {
       // 2. Fall back to API if no localStorage
       try {
         console.log('[Store] Attempting to fetch articles from API...')
-        const response = await fetch('http://127.0.0.1:4000/articles', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000'
+        const response = await fetch(`${apiUrl}/articles`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         })
@@ -38,10 +39,16 @@ const createHybridStorage = () => {
         const data = await response.json()
         const articles = Array.isArray(data) ? data : data.articles || []
 
+        // Normalize IDs: use _id or id, whichever exists
+        const normalized = articles.map(a => {
+          const id = a.id || a._id
+          return { ...a, id }
+        })
+
         // Store in localStorage for next time
-        if (typeof window !== 'undefined' && articles.length > 0) {
+        if (typeof window !== 'undefined' && normalized.length > 0) {
           const stateObj = {
-            articles: Object.fromEntries(articles.map(a => [a.id, a])),
+            articles: Object.fromEntries(normalized.map(a => [a.id, a])),
             _hydrated: true,
           }
           localStorage.setItem(name || STORAGE_KEY, JSON.stringify(stateObj))
@@ -49,7 +56,7 @@ const createHybridStorage = () => {
         }
 
         return JSON.stringify({
-          articles: Object.fromEntries(articles.map(a => [a.id, a])),
+          articles: Object.fromEntries(normalized.map(a => [a.id, a])),
           _hydrated: true,
         })
       } catch (apiErr) {
@@ -96,13 +103,20 @@ export const useArticlesStore = create(
       // write an array of articles
       setArticles: (list) =>
         set({
-          articles: Object.fromEntries(list.map(a => [a.id, a])),
+          articles: Object.fromEntries(
+            list.map(a => {
+              const id = a.id || a._id
+              return [id, { ...a, id }] // Normalize: ensure both id and _id exist
+            })
+          ),
           _hydrated: true,
         }),
 
       // add/update one
-      upsertArticle: (article) =>
-        set({ articles: { ...get().articles, [article.id]: article } }),
+      upsertArticle: (article) => {
+        const id = article.id || article._id
+        set({ articles: { ...get().articles, [id]: { ...article, id } } })
+      },
 
       // read single by id
       getById: (id) => get().articles[id],
