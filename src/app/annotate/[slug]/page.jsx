@@ -31,22 +31,28 @@ const Page = () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/articles/${slug}`)
         if (!res.ok) throw new Error('Not found')
-        const a = await res.json()
-        console.log('Fetched article:', a)
+        const data = await res.json()
+        console.log('Fetched article:', data)
+        console.log('Sentences:', data.article?.sentences)
+        // Backend returns { article: {...} }
+        const a = data.article || data
+
         const normalized = {
           id: a.id || a._id || a.slug || slug,
+          _id: a._id || a.id,
           title: a.title || 'Untitled',
           body: a.body || a.content || a.text || '',
           sentences: a.sentences || [],
           excerpt: a.excerpt || '',
-          publishedAt: a.publishedAt || new Date().toISOString(),
-          source: a.source || 'Unknown',
+          publishedAt: a.publishedAt || a.published_at || new Date().toISOString(),
+          source: a.source?.title || a.source || 'Unknown',
           annotationCount: a.annotationCount ?? 0,
           reviewCount: a.reviewCount ?? 0,
         }
         upsertArticle(normalized)
         setArticle(normalized)
-      } catch {
+      } catch (err) {
+        console.error('Error fetching article:', err)
         setArticle(null)
       } finally {
         setLoading(false)
