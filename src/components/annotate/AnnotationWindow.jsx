@@ -6,10 +6,10 @@ import './annotate.css'
 // Reusable annotation window for creating or editing an annotation selection
 // Props contract:
 // - pendingSelection: { text, startOffset, endOffset }
-// - currentAnnotation: { primaryCategory, secondaryCategory, note, additionalBiases }
+// - currentAnnotation: { primaryCategory, secondaryCategory, confidenceLevel, note, additionalBiases }
 // - biasCategories: string[]
 // - selectOpen: boolean, setSelectOpen: fn(boolean)
-// - onPrimaryChange, onSecondaryChange, onNoteChange, onAdditionalBiasesChange, onSave, onCancel: handlers
+// - onPrimaryChange, onSecondaryChange, onConfidenceChange, onNoteChange, onAdditionalBiasesChange, onSave, onCancel: handlers
 const AnnotationWindow = ({
   pendingSelection,
   currentAnnotation,
@@ -18,6 +18,7 @@ const AnnotationWindow = ({
   setSelectOpen,
   onPrimaryChange,
   onSecondaryChange,
+  onConfidenceChange,
   onAdditionalBiasesChange,
   onNoteChange,
   onSave,
@@ -80,6 +81,23 @@ const AnnotationWindow = ({
                 {category}
               </option>
             ))}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label>Confidence Level:</label>
+        <div className={`custom-select-wrapper${selectOpen ? ' open' : ''}`}>
+          <select
+            value={currentAnnotation?.confidenceLevel || ''}
+            onChange={(e) => onConfidenceChange && onConfidenceChange(e.target.value)}
+            onFocus={() => setSelectOpen && setSelectOpen(true)}
+            onBlur={() => setSelectOpen && setSelectOpen(false)}
+          >
+            <option value="">Confidence Level for the Primary Bias</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
           </select>
         </div>
       </div>
