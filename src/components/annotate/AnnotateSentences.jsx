@@ -31,7 +31,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
         setActiveIndex(index)
         // Open the annotation window with this sentence prefilled (same flow as Enter)
         setPendingSelection({ text: s.sentence_text, startOffset: s.startOffset, endOffset: s.endOffset })
-        setCurrentAnnotation({ text: s.sentence_text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
+        setCurrentAnnotation({ text: s.sentence_text, primaryCategory: '', secondaryCategory: '', confidenceLevel: '', additionalBiases: [], note: '' })
         setShowAnnotationWindow(true)
     }, [])
 
@@ -50,7 +50,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                     const s = articleSentences[activeIndex]
                     // Open the annotation window with this sentence prefilled
                     setPendingSelection({ text: s.sentence_text, startOffset: s.startOffset, endOffset: s.endOffset })
-                    setCurrentAnnotation({ text: s.sentence_text, primaryCategory: '', secondaryCategory: '', additionalBiases: [], note: '' })
+                    setCurrentAnnotation({ text: s.sentence_text, primaryCategory: '', secondaryCategory: '', confidenceLevel: '', additionalBiases: [], note: '' })
                     setShowAnnotationWindow(true)
                 }
         }
@@ -99,6 +99,9 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                 const handleSecondarySelect = (secondaryCategory) => {
                     setCurrentAnnotation(prev => ({ ...(prev||{}), secondaryCategory }))
                 }
+                const handleConfidenceChange = (confidenceLevel) => {
+                    setCurrentAnnotation(prev => ({ ...(prev||{}), confidenceLevel }))
+                }
                 const handleAdditionalBiasesChange = (additionalBiases) => {
                     setCurrentAnnotation(prev => ({ ...(prev||{}), additionalBiases }))
                 }
@@ -113,6 +116,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                         category: currentAnnotation.primaryCategory,
                         primaryCategory: currentAnnotation.primaryCategory,
                         secondaryCategory: currentAnnotation.secondaryCategory || '',
+                        confidenceLevel: currentAnnotation.confidenceLevel || '',
                         additionalBiases: currentAnnotation.additionalBiases || [],
                         note: currentAnnotation.note || '',
                         startOffset: pendingSelection.startOffset,
@@ -246,6 +250,7 @@ const AnnotateSentences = ({ articleSentences, annotations = [], onAddAnnotation
                             setSelectOpen={setSelectOpen}
                             onPrimaryChange={handlePrimarySelect}
                             onSecondaryChange={handleSecondarySelect}
+                            onConfidenceChange={handleConfidenceChange}
                             onAdditionalBiasesChange={handleAdditionalBiasesChange}
                             onNoteChange={handleNoteChange}
                             onSave={saveAnnotation}

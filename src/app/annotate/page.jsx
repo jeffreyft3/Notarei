@@ -56,11 +56,6 @@ const generateArticles = (count = 10) => {
 async function fetchArticles() {
   try {
     const apiUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API_URL
-    if (!apiUrl) {
-      console.warn('No BACKEND_API_URL environment variable found, using sample data')
-      return generateArticles(12)
-    }
-
     const response = await fetch(`${apiUrl}/articles`, {
       cache: 'no-store' // Ensure fresh data on each request
     })
@@ -77,7 +72,7 @@ async function fetchArticles() {
   } catch (error) {
     console.error('Error fetching articles:', error)
     // Fallback to sample data
-    return generateArticles(12)
+    // return generateArticles(12)
   }
 }
 

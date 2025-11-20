@@ -85,6 +85,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
             text: selectedText,
             primaryCategory: '',
             secondaryCategory: '',
+            confidenceLevel: '',
             additionalBiases: [],
             note: ''
           })
@@ -109,7 +110,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   }
 
   // Add annotation
-  const addAnnotation = (primaryCategory, secondaryCategory = '', additionalBiases = [], note = '') => {
+  const addAnnotation = (primaryCategory, secondaryCategory = '', confidenceLevel = '', additionalBiases = [], note = '') => {
     if (pendingSelection && currentAnnotation) {
       const newAnnotation = {
         id: Date.now(),
@@ -118,18 +119,19 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
         category: primaryCategory,
         primaryCategory,
         secondaryCategory,
+        confidenceLevel,
         additionalBiases,
         note,
         startOffset: pendingSelection.startOffset,
         endOffset: pendingSelection.endOffset,
         timestamp: new Date().toISOString()
       }
-      
+
       onAddAnnotation(newAnnotation)
       setShowAnnotationWindow(false)
       setPendingSelection(null)
       setCurrentAnnotation(null)
-      
+
       // Clear browser selection
       window.getSelection().removeAllRanges()
     }
@@ -153,6 +155,12 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
     }
   }
 
+  const handleConfidenceChange = (confidenceLevel) => {
+    if (currentAnnotation) {
+      setCurrentAnnotation(prev => ({ ...prev, confidenceLevel }))
+    }
+  }
+
   const handleAdditionalBiasesChange = (additionalBiases) => {
     if (currentAnnotation) {
       setCurrentAnnotation(prev => ({ ...prev, additionalBiases }))
@@ -170,8 +178,9 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
   const saveAnnotation = () => {
     if (currentAnnotation && currentAnnotation.primaryCategory) {
       addAnnotation(
-        currentAnnotation.primaryCategory, 
-        currentAnnotation.secondaryCategory, 
+        currentAnnotation.primaryCategory,
+        currentAnnotation.secondaryCategory,
+        currentAnnotation.confidenceLevel || '',
         currentAnnotation.additionalBiases || [],
         currentAnnotation.note
       )
@@ -420,6 +429,7 @@ const AnnotationCanvas = ({ articleText, annotations, onAddAnnotation, onRemoveA
             setSelectOpen={setSelectOpen}
             onPrimaryChange={handlePrimarySelect}
             onSecondaryChange={handleSecondarySelect}
+            onConfidenceChange={handleConfidenceChange}
             onAdditionalBiasesChange={handleAdditionalBiasesChange}
             onNoteChange={handleNoteChange}
             onSave={saveAnnotation}
