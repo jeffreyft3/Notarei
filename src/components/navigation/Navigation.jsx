@@ -10,7 +10,7 @@ import { useUserStore } from '@/store/useUserStore'
 
 const Navigation = () => {
   const { user, isLoading } = useUser()
-  const appUser = useUserStore(s => s.user)
+  const { user: appUser, setUser: setAppUser } = useUserStore()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const desktopNavRef = useRef(null)
@@ -54,12 +54,16 @@ const Navigation = () => {
         if (response.ok) {
           const data = await response.json();
           setUserData(data.user);
+          // Save user data to Zustand store
+          setAppUser(data.user);
         } else {
           setUserData(null);
+          setAppUser(null);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
         setUserData(null);
+        setAppUser(null);
       }
     };
 
@@ -68,7 +72,7 @@ const Navigation = () => {
     } else {
       setUserData(null);
     }
-  }, [accessToken, user]);
+  }, [accessToken, user, setAppUser]);
 
 
   const navItems = [
