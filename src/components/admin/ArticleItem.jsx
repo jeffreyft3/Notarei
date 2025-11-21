@@ -30,7 +30,7 @@ const ArticleItem = ({ article, assignedCount, isSelected, onClick }) => {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
         <div style={{ flex: 1, marginRight: 16 }}>
-          <strong style={{ fontSize: 16, lineHeight: 1.4, display: 'block', marginBottom: 10 }}>
+          <strong style={{ fontSize: 16, lineHeight: 1.4, display: 'block', marginBottom: 10, color: '#222' }}>
             {article.title}
           </strong>
           

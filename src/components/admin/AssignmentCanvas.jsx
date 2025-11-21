@@ -62,15 +62,16 @@ const AssignmentCanvas = ({
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: 8, 
-                padding: '8px 12px', 
+                padding: '16px 20px', 
+                fontFamily: 'tt-commons-pro, sans-serif',
+                fontSize: "1.25rem",
                 background: '#fff', 
-                border: '1px solid #007acc', 
                 borderRadius: 8,
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}
             >
-              <span style={{ fontWeight: 600, fontSize: 14 }}>{user.name || user.email || 'Unknown User'}</span>
-              <span style={{ color: '#777', fontSize: 12 }}>• {user.specialty || 'General'}</span>
+              <span style={{ fontWeight: 600, fontSize: 14, color: '#333' }}>{user.name || user.email || 'Unknown User'}</span>
+              <span style={{ color: '#777', fontSize: 12}}>• {user.specialty || 'General'}</span>
               <button 
                 onClick={() => onUnassign(articleId, uid)} 
                 title="Unassign" 

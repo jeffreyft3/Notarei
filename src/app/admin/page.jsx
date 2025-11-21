@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useUserStore } from '@/store/useUserStore'
 import { useRouter } from 'next/navigation'
 import ArticleAssign from '@/components/admin/ArticleAssign'
+import ArticleSearchBar from '@/components/admin/ArticleSearchBar'
 
 // Placeholder Admin Console with basic client-side gate and drag-and-drop mock UI
 
@@ -113,14 +114,9 @@ const AdminPage = () => {
           <h1 style={{ margin: 0 }}>Admin Console</h1>
           {/* <p style={{ color: '#666', margin: '6px 0 0 0' }}>Admin Console Features.</p> */}
         </div>
-        <button
-          onClick={() => { localStorage.removeItem('isAdmin'); setIsAdmin(false) }}
-          style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: 'pointer' }}
-        >
-          Sign out
-        </button>
       </header>
       
+      <ArticleSearchBar onSearch={(query) => console.log('Search query:', query)} />
       
       <ArticleAssign
         articles={articles}
