@@ -11,7 +11,7 @@ const UserPage = () => {
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading && !auth0User) {
+    if (!isLoading && !auth0Usear) {
       router.push('/auth/login')
     }
   }, [auth0User, isLoading, router])
